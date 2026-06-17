@@ -1,0 +1,200 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "Microsoft YaHei", sans-serif;
+  color: #16181d;
+  background: transparent;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  height: 100vh;
+  overflow: hidden;
+  user-select: none;
+  background: #f7f7f4;
+}
+
+html,
+#app {
+  height: 100%;
+  overflow: hidden;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  user-select: text;
+}
+
+button {
+  cursor: default;
+}
+
+.drag-region {
+  -webkit-app-region: drag;
+}
+
+.no-drag {
+  -webkit-app-region: no-drag;
+}
+
+.scroll-thin {
+  scrollbar-width: thin;
+}
+
+.scroll-thin::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scroll-thin::-webkit-scrollbar-thumb {
+  background: #c7c0b4;
+  border-radius: 999px;
+}
+
+.view-slide-enter-active,
+.view-slide-leave-active {
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease;
+}
+
+.view-slide-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.view-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+.list-motion-move,
+.list-motion-enter-active,
+.list-motion-leave-active {
+  transition:
+    opacity 160ms ease,
+    transform 180ms ease,
+    background-color 160ms ease;
+}
+
+.list-motion-enter-from,
+.list-motion-leave-to {
+  opacity: 0;
+  transform: translateY(6px) scale(0.99);
+}
+
+.list-motion-leave-active {
+  position: absolute;
+  width: calc(100% - 1.5rem);
+}
+
+.guide-highlight {
+  position: fixed;
+  z-index: 60;
+  border: 2px solid #f26c4f;
+  border-radius: 10px;
+  box-shadow:
+    0 0 0 9999px rgba(0, 0, 0, 0.55),
+    0 10px 32px rgba(0, 0, 0, 0.28);
+  pointer-events: none;
+  transition:
+    left 180ms ease,
+    top 180ms ease,
+    width 180ms ease,
+    height 180ms ease;
+}
+
+.guide-card {
+  animation: guide-card-in 180ms ease both;
+}
+
+@keyframes guide-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.rich-text-preview {
+  user-select: text;
+  color: #1f2933;
+  font-size: 14px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.rich-text-preview :where(p, div, blockquote, pre, ul, ol, table) {
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.rich-text-preview :where(h1, h2, h3, h4, h5, h6) {
+  margin: 12px 0 8px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.rich-text-preview :where(ul, ol) {
+  padding-left: 22px;
+}
+
+.rich-text-preview ul {
+  list-style: disc;
+}
+
+.rich-text-preview ol {
+  list-style: decimal;
+}
+
+.rich-text-preview img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 8px 0;
+  border: 1px solid #ded8cc;
+  border-radius: 6px;
+  object-fit: contain;
+}
+
+.rich-text-preview table {
+  max-width: 100%;
+  border-collapse: collapse;
+}
+
+.rich-text-preview :where(th, td) {
+  border: 1px solid #ded8cc;
+  padding: 6px 8px;
+  vertical-align: top;
+}
+
+.rich-text-preview pre {
+  overflow: auto;
+  border-radius: 6px;
+  background: #f5f4ef;
+  padding: 10px;
+}
+
+.rich-text-preview code {
+  border-radius: 4px;
+  background: #f5f4ef;
+  padding: 1px 4px;
+}

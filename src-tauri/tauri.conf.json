@@ -1,0 +1,69 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "SheepClip",
+  "version": "0.17.0",
+  "identifier": "com.sheepclip.desktop",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build",
+    "devUrl": "http://localhost:1420",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "withGlobalTauri": false,
+    "windows": [
+      {
+        "label": "main",
+        "title": "SheepClip",
+        "width": 980,
+        "height": 680,
+        "minWidth": 760,
+        "minHeight": 520,
+        "center": true,
+        "visible": false,
+        "decorations": false,
+        "skipTaskbar": true
+      },
+      {
+        "label": "floating",
+        "title": "SheepClip Floating",
+        "url": "index.html",
+        "width": 420,
+        "height": 260,
+        "minWidth": 320,
+        "minHeight": 180,
+        "center": true,
+        "visible": false,
+        "decorations": false,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "resizable": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "publisher": "PASSHEEP",
+    "copyright": "Copyright © 2026 PASSHEEP",
+    "homepage": "https://github.com/passheep/SheepClip",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "windows": {
+      "nsis": {
+        "installerIcon": "icons/icon.ico",
+        "uninstallerIcon": "icons/icon.ico",
+        "languages": ["SimpChinese"],
+        "displayLanguageSelector": false
+      }
+    }
+  }
+}
