@@ -228,7 +228,7 @@
             </form>
           </section>
 
-          <section v-else-if="activeView === 'settings'" key="settings" data-guide="settings-view" class="h-full overflow-y-auto p-5">
+          <section v-else-if="activeView === 'settings'" key="settings" data-guide="settings-view" data-guide-scroll class="h-full overflow-y-auto p-5">
             <div class="max-w-2xl">
               <h2 class="text-sm font-semibold">设置</h2>
               <div class="mt-4 space-y-4">
@@ -387,7 +387,7 @@
                 <dl class="mt-5 space-y-3 text-sm">
                   <div class="flex items-center justify-between gap-4 border-t border-line pt-3">
                     <dt class="text-stone-500">软件版本</dt>
-                    <dd class="font-medium">0.17</dd>
+                    <dd class="font-medium">0.18</dd>
                   </div>
                   <div class="flex items-center justify-between gap-4 border-t border-line pt-3">
                     <dt class="text-stone-500">开发者</dt>
@@ -633,6 +633,7 @@ let quickDragStarted = false;
 let quickDragStartX = 0;
 let quickDragStartY = 0;
 let guideMeasureTimer = 0;
+let guideStepTimers: number[] = [];
 
 const settings = reactive<AppSettings>({
   history_limit: 2000,
@@ -913,46 +914,68 @@ function findGuideElement(step: GuideStep) {
     ?? (step.fallbackSelector ? document.querySelector<HTMLElement>(step.fallbackSelector) : null);
 }
 
-function scrollGuideTargetIntoView() {
+function clearGuideStepTimers() {
+  guideStepTimers.forEach((timer) => window.clearTimeout(timer));
+  guideStepTimers = [];
+}
+
+function scrollGuideTargetIntoView(behavior: ScrollBehavior = 'smooth') {
   const step = currentGuideStep.value;
   const element = findGuideElement(step);
-  element?.scrollIntoView({ block: step.view === 'settings' ? 'center' : 'nearest', inline: 'nearest' });
+  if (!element) return;
+
+  const scroller = step.view === 'settings' ? element.closest<HTMLElement>('[data-guide-scroll]') : null;
+  if (scroller) {
+    const elementRect = element.getBoundingClientRect();
+    const scrollerRect = scroller.getBoundingClientRect();
+    const targetTop = scroller.scrollTop
+      + elementRect.top
+      - scrollerRect.top
+      - (scroller.clientHeight - elementRect.height) / 2;
+    scroller.scrollTo({ top: Math.max(0, targetTop), behavior });
+    return;
+  }
+
+  element.scrollIntoView({ block: step.view === 'settings' ? 'center' : 'nearest', inline: 'nearest', behavior });
+}
+
+function updateGuideHighlight() {
+  if (!showOnboarding.value || !currentGuideStep.value) {
+    guideHighlight.value = null;
+    return;
+  }
+  const element = findGuideElement(currentGuideStep.value);
+  const rect = element?.getBoundingClientRect() ?? null;
+  const visible = rect
+    && rect.width > 8
+    && rect.height > 8
+    && rect.bottom > 0
+    && rect.right > 0
+    && rect.top < window.innerHeight
+    && rect.left < window.innerWidth;
+  guideHighlight.value = visible ? rect : null;
 }
 
 function measureGuideHighlight() {
   window.clearTimeout(guideMeasureTimer);
-  guideMeasureTimer = window.setTimeout(() => {
-    if (!showOnboarding.value || !currentGuideStep.value) {
-      guideHighlight.value = null;
-      return;
-    }
-    const step = currentGuideStep.value;
-    const element = findGuideElement(step);
-    const rect = element?.getBoundingClientRect() ?? null;
-    guideHighlight.value = rect && rect.width > 8 && rect.height > 8 ? rect : null;
-    if (!guideHighlight.value) {
-      window.clearTimeout(guideMeasureTimer);
-      guideMeasureTimer = window.setTimeout(() => {
-        const retryStep = currentGuideStep.value!;
-        const retryElement = findGuideElement(retryStep);
-        const retryRect = retryElement?.getBoundingClientRect() ?? null;
-        guideHighlight.value = retryRect && retryRect.width > 8 && retryRect.height > 8 ? retryRect : null;
-      }, 180);
-    }
-  }, 80);
+  guideMeasureTimer = window.setTimeout(updateGuideHighlight, 80);
+}
+
+function scheduleGuideTargetSync() {
+  clearGuideStepTimers();
+  [40, 180, 340, 560].forEach((delay, index) => {
+    guideStepTimers.push(window.setTimeout(() => {
+      scrollGuideTargetIntoView(index === 0 ? 'smooth' : 'auto');
+      window.requestAnimationFrame(updateGuideHighlight);
+    }, delay));
+  });
 }
 
 function goGuideStep(index: number) {
   guideIndex.value = Math.min(Math.max(index, 0), guideSteps.length - 1);
   activeView.value = currentGuideStep.value.view;
   nextTick(() => {
-    scrollGuideTargetIntoView();
-    measureGuideHighlight();
-    window.setTimeout(() => {
-      scrollGuideTargetIntoView();
-      measureGuideHighlight();
-    }, 120);
-    window.setTimeout(measureGuideHighlight, 220);
+    scheduleGuideTargetSync();
   });
 }
 
@@ -1536,6 +1559,7 @@ onUnmounted(() => {
   window.clearTimeout(refreshTimer);
   window.clearTimeout(settingsSaveTimer);
   window.clearTimeout(guideMeasureTimer);
+  clearGuideStepTimers();
   window.removeEventListener('focus', refreshClipboardItems);
   window.removeEventListener('keydown', handleWindowKeydown, true);
   window.removeEventListener('resize', updateResponsiveSidebar);

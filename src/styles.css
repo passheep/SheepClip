@@ -112,14 +112,23 @@ button {
     0 10px 32px rgba(0, 0, 0, 0.28),
     inset 0 0 0 9999px rgba(255, 255, 255, 0.08);
   transition:
-    left 180ms ease,
-    top 180ms ease,
-    width 180ms ease,
-    height 180ms ease;
+    left 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    top 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    width 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    height 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 220ms ease,
+    border-radius 220ms ease;
+  will-change: left, top, width, height;
 }
 
 .guide-card {
-  animation: guide-card-in 180ms ease both;
+  animation: guide-card-in 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  transition:
+    left 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    top 260ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 180ms ease,
+    transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: left, top, transform, opacity;
 }
 
 @keyframes guide-card-in {

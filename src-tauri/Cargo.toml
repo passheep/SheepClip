@@ -1,6 +1,6 @@
 [package]
 name = "sheepclip"
-version = "0.17.0"
+version = "0.18.0"
 description = "SheepClip intelligent clipboard and fast input assistant"
 authors = ["SheepClip"]
 edition = "2021"
