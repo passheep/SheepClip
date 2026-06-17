@@ -332,15 +332,20 @@ function scheduleFocusHide(focused: boolean) {
 let unlistenTrigger: (() => void) | null = null;
 let unlistenFocus: (() => void) | null = null;
 let unlistenQuickInputsUpdated: (() => void) | null = null;
+let unlistenSettingsUpdated: (() => void) | null = null;
 let unlistenWindowSize: (() => void) | null = null;
 
 function handlePointerUp() {
   nativePointerOperationActive = false;
 }
 
-onMounted(async () => {
+async function refreshAppearanceSettings() {
   availableFontOptions.value = getAvailableFontOptions();
   settings.value = await getSettings();
+}
+
+onMounted(async () => {
+  await refreshAppearanceSettings();
   await refresh();
   window.addEventListener('keydown', onKeydown);
   window.addEventListener('pointerup', handlePointerUp);
@@ -358,8 +363,9 @@ onMounted(async () => {
         await refresh(searchQuery.value, triggerText.value, selectedIndex.value);
       }
     });
+    unlistenSettingsUpdated = await listen('settings-updated', refreshAppearanceSettings);
     unlistenTrigger = await listen<{ query: string; trigger: string; selectedIndex: number }>('floating-triggered', async (event) => {
-      settings.value = await getSettings();
+      await refreshAppearanceSettings();
       activeSource.value = 'quick';
       ignoreSlashUntil = Date.now() + 300;
       await refresh('', event.payload.trigger, 0);
@@ -376,6 +382,7 @@ onUnmounted(() => {
   unlistenTrigger?.();
   unlistenFocus?.();
   unlistenQuickInputsUpdated?.();
+  unlistenSettingsUpdated?.();
   unlistenWindowSize?.();
 });
 </script>

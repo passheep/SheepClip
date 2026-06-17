@@ -1190,6 +1190,7 @@ fn save_settings(
     write_settings(&conn, &sanitized)?;
     trim_history(&conn, sanitized.history_limit)?;
     apply_runtime_settings(&app, &state, &sanitized);
+    let _ = app.emit("settings-updated", ());
 
     Ok(sanitized)
 }
@@ -1213,6 +1214,7 @@ fn reset_settings(app: AppHandle, state: State<AppState>) -> AppResult<AppSettin
     write_settings(&conn, &recommended)?;
     trim_history(&conn, recommended.history_limit)?;
     apply_runtime_settings(&app, &state, &recommended);
+    let _ = app.emit("settings-updated", ());
     Ok(recommended)
 }
 
