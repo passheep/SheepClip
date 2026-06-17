@@ -10,6 +10,7 @@ import {
 
 test('resolveThemeKey falls back to warm for unknown keys', () => {
   assert.equal(resolveThemeKey('blue'), 'blue');
+  assert.equal(resolveThemeKey('dark'), 'dark');
   assert.equal(resolveThemeKey('missing'), 'warm');
   assert.equal(resolveThemeKey(undefined), 'warm');
 });
@@ -29,4 +30,11 @@ test('getThemeStyle returns css variables for selected theme and font', () => {
   const style = getThemeStyle('blue', 'simhei', FONT_OPTIONS);
   assert.equal(style['--color-primary'], '#2563eb');
   assert.match(style['--app-font-family'], /SimHei/);
+  assert.match(style.fontFamily, /SimHei/);
+});
+
+test('dark theme exposes dark surface colors', () => {
+  const style = getThemeStyle('dark', 'system', FONT_OPTIONS);
+  assert.equal(style['--color-panel'], '#111318');
+  assert.equal(style['--color-card'], '#1f232b');
 });

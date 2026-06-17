@@ -77,6 +77,49 @@ button {
   border-radius: 999px;
 }
 
+[data-theme="dark"] :where(
+  .bg-white,
+  [class~="bg-white/65"],
+  [class~="bg-white/70"],
+  [class~="bg-white/80"]
+) {
+  background-color: var(--color-card);
+}
+
+[data-theme="dark"] .hover\:bg-white:hover,
+[data-theme="dark"] .hover\:bg-white\/70:hover {
+  background-color: var(--color-primary-soft);
+}
+
+[data-theme="dark"] :where(
+  .text-stone-400,
+  .text-stone-500,
+  .text-stone-600,
+  .text-stone-700
+) {
+  color: var(--color-muted);
+}
+
+[data-theme="dark"] .bg-stone-100 {
+  background-color: var(--color-header);
+}
+
+[data-theme="dark"] .bg-stone-300 {
+  background-color: var(--color-line);
+}
+
+[data-theme="dark"] .border-stone-400 {
+  border-color: var(--color-muted);
+}
+
+[data-theme="dark"] .disabled\:bg-stone-100:disabled {
+  background-color: var(--color-header);
+}
+
+[data-theme="dark"] .disabled\:text-stone-400:disabled {
+  color: var(--color-muted);
+}
+
 .view-slide-enter-active,
 .view-slide-leave-active {
   transition:

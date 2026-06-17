@@ -1,5 +1,5 @@
 <template>
-  <main class="relative h-screen select-none overflow-hidden text-ink" :style="appThemeStyle" @contextmenu.prevent @keydown.tab.prevent="switchPrimaryView">
+  <main class="relative h-screen select-none overflow-hidden text-ink" :data-theme="currentThemeKey" :style="appThemeStyle" @contextmenu.prevent @keydown.tab.prevent="switchPrimaryView">
     <section class="flex h-full w-full overflow-hidden border bg-panel transition" :class="mainWindowPinned ? 'border-[3px] border-rust shadow-[inset_0_0_0_1px_rgba(178,95,58,0.35),0_0_0_2px_rgba(178,95,58,0.25)]' : 'border-line'">
       <aside class="flex shrink-0 flex-col border-r border-line bg-sidebar transition-[width]" :class="sidebarCollapsed ? 'w-16' : 'w-56'">
         <div data-tauri-drag-region class="border-b border-line px-3 py-3" @pointerdown="startWindowDrag">
@@ -110,7 +110,7 @@
                 :data-entry-key="itemKey('clipboard', item.id)"
                 :data-guide="index === 0 ? 'clipboard-first-item' : undefined"
                 class="mb-1 grid min-h-12 w-full grid-cols-[2.25rem_auto_1fr_auto_auto] items-center gap-2 rounded-md border px-3 text-left transition"
-                :class="selectedKey === itemKey('clipboard', item.id) ? 'border-primaryMuted bg-primarySoft text-ink shadow-sm ring-2 ring-primaryMuted' : 'border-transparent bg-white/65 hover:bg-white'"
+                :class="selectedKey === itemKey('clipboard', item.id) ? 'border-primaryMuted bg-primarySoft text-ink shadow-sm ring-2 ring-primaryMuted' : 'border-transparent bg-card hover:bg-primarySoft'"
                 @click="selectItem('clipboard', item.id)"
                 @dblclick="copyClipboard(item)"
                 @contextmenu.prevent="showClipboardDetail(item)"
@@ -160,7 +160,7 @@
                   :data-quick-id="item.id"
                   class="grid w-full cursor-grab grid-cols-[auto_1fr] items-center gap-3 rounded-md border px-3 py-2 text-left transition duration-150 active:cursor-grabbing"
                   :class="[
-                    selectedKey === itemKey('quick', item.id) ? 'border-primaryMuted bg-primarySoft text-ink shadow-sm ring-2 ring-primaryMuted' : 'border-transparent bg-white/65 hover:bg-white',
+                    selectedKey === itemKey('quick', item.id) ? 'border-primaryMuted bg-primarySoft text-ink shadow-sm ring-2 ring-primaryMuted' : 'border-transparent bg-card hover:bg-primarySoft',
                     dragQuickId === item.id ? 'scale-[0.99] opacity-70 shadow-soft ring-2 ring-rust/50' : '',
                     dragQuickId && dragQuickTargetId === item.id && dragQuickId !== item.id ? 'translate-y-0.5' : ''
                   ]"
@@ -250,16 +250,16 @@
                       <div class="flex h-24">
                         <div class="w-16 border-r" :style="{ backgroundColor: theme.colors.sidebar, borderColor: theme.colors.line }">
                           <div class="m-2 h-4 rounded" :style="{ backgroundColor: theme.colors.primary }" />
-                          <div class="mx-2 mt-2 h-3 rounded bg-white/70" />
-                          <div class="mx-2 mt-1 h-3 rounded bg-white/50" />
+                          <div class="mx-2 mt-2 h-3 rounded" :style="{ backgroundColor: theme.colors.card, opacity: 0.72 }" />
+                          <div class="mx-2 mt-1 h-3 rounded" :style="{ backgroundColor: theme.colors.card, opacity: 0.48 }" />
                         </div>
                         <div class="min-w-0 flex-1">
                           <div class="h-6 border-b" :style="{ backgroundColor: theme.colors.header, borderColor: theme.colors.line }" />
                           <div class="space-y-1.5 p-2">
                             <div class="h-4 rounded" :style="{ backgroundColor: theme.colors.primarySoft, border: `1px solid ${theme.colors.primaryMuted}` }" />
-                            <div class="h-4 rounded bg-white/80" />
+                            <div class="h-4 rounded" :style="{ backgroundColor: theme.colors.card, opacity: 0.82 }" />
                             <div class="flex gap-1">
-                              <div class="h-4 flex-1 rounded bg-white/80" />
+                              <div class="h-4 flex-1 rounded" :style="{ backgroundColor: theme.colors.card, opacity: 0.82 }" />
                               <div class="h-4 w-8 rounded" :style="{ backgroundColor: theme.colors.primary }" />
                             </div>
                           </div>

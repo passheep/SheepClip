@@ -1,21 +1,21 @@
 <template>
-  <main class="relative flex h-screen select-none flex-col overflow-hidden rounded-lg border border-line bg-panel text-ink shadow-soft" @contextmenu.prevent @mousemove="resetIdleTimer" @mousedown="resetIdleTimer">
-    <header data-tauri-drag-region class="shrink-0 border-b border-line bg-[#fbfaf6] px-3 py-2" @pointerdown="startWindowDrag">
+  <main class="relative flex h-screen select-none flex-col overflow-hidden rounded-lg border border-line bg-panel text-ink shadow-soft" :data-theme="currentThemeKey" :style="floatingThemeStyle" @contextmenu.prevent @mousemove="resetIdleTimer" @mousedown="resetIdleTimer">
+    <header data-tauri-drag-region class="shrink-0 border-b border-line bg-header px-3 py-2" @pointerdown="startWindowDrag">
       <div class="flex items-center justify-between gap-3">
         <div class="min-w-0">
           <span class="text-sm font-semibold">{{ activeSource === 'quick' ? '快捷输入' : '剪贴板历史' }}</span>
-          <span class="ml-2 text-xs text-stone-500">{{ triggerText || settings.inline_trigger }}</span>
+          <span class="ml-2 text-xs text-muted">{{ triggerText || settings.inline_trigger }}</span>
         </div>
-        <span class="shrink-0 text-xs text-stone-500">Tab 切换 · Enter 粘贴</span>
+        <span class="shrink-0 text-xs text-muted">Tab 切换 · Enter 粘贴</span>
       </div>
-      <div class="mt-2 grid grid-cols-2 gap-1 rounded-md bg-[#eceae2] p-1">
-        <button type="button" class="h-7 rounded text-xs transition" :class="activeSource === 'quick' ? 'bg-white text-ink shadow-sm' : 'text-stone-600'" @click="switchSource('quick')">快捷短语</button>
-        <button type="button" class="h-7 rounded text-xs transition" :class="activeSource === 'clipboard' ? 'bg-white text-ink shadow-sm' : 'text-stone-600'" @click="switchSource('clipboard')">剪贴板</button>
+      <div class="mt-2 grid grid-cols-2 gap-1 rounded-md bg-sidebar p-1">
+        <button type="button" class="h-7 rounded text-xs transition" :class="activeSource === 'quick' ? 'bg-card text-ink shadow-sm' : 'text-muted'" @click="switchSource('quick')">快捷短语</button>
+        <button type="button" class="h-7 rounded text-xs transition" :class="activeSource === 'clipboard' ? 'bg-card text-ink shadow-sm' : 'text-muted'" @click="switchSource('clipboard')">剪贴板</button>
       </div>
       <input
         ref="queryInputRef"
         v-model="searchQuery"
-        class="mt-2 h-8 w-full rounded-md border border-line bg-white px-3 text-sm outline-none transition focus:border-mint"
+        class="mt-2 h-8 w-full rounded-md border border-line bg-card px-3 text-sm outline-none transition focus:border-mint"
         placeholder="输入标签或关键字"
         autocomplete="off"
         @keydown="onKeydown"
@@ -33,28 +33,28 @@
           type="button"
           :data-floating-index="index"
           class="mb-1 grid w-full grid-cols-[1fr_auto] items-center gap-2 rounded-md border px-3 py-2 text-left transition"
-          :class="selectedIndex === index ? 'border-[#6f94a7] bg-[#edf3f5] text-ink shadow-sm ring-2 ring-[#8bb4c5]/70' : 'border-transparent bg-white/65 hover:bg-white'"
+          :class="selectedIndex === index ? 'border-primaryMuted bg-primarySoft text-ink shadow-sm ring-2 ring-primaryMuted' : 'border-transparent bg-card hover:bg-primarySoft'"
           @mouseenter="selectedIndex = index; resetIdleTimer()"
           @click="pasteItem(item)"
         >
           <span class="min-w-0">
             <span class="block truncate text-sm">{{ item.display }}</span>
-            <span v-if="activeSource === 'clipboard'" class="mt-0.5 block truncate text-xs text-stone-500">{{ kindLabel(item.kind) }} · {{ item.source_app || '未知来源' }}</span>
+            <span v-if="activeSource === 'clipboard'" class="mt-0.5 block truncate text-xs text-muted">{{ kindLabel(item.kind) }} · {{ item.source_app || '未知来源' }}</span>
           </span>
-          <span class="flex flex-wrap justify-end gap-1 text-xs text-stone-600">
+          <span class="flex flex-wrap justify-end gap-1 text-xs text-muted">
             <template v-if="activeSource === 'quick'">
-              <span v-for="tag in item.tags" :key="tag" class="rounded bg-[#eceae2] px-1.5 py-0.5">{{ tag }}</span>
+              <span v-for="tag in item.tags" :key="tag" class="rounded bg-sidebar px-1.5 py-0.5">{{ tag }}</span>
             </template>
-            <span v-else class="rounded bg-[#eceae2] px-1.5 py-0.5">{{ formatTime(item.created_at) }}</span>
+            <span v-else class="rounded bg-sidebar px-1.5 py-0.5">{{ formatTime(item.created_at) }}</span>
           </span>
         </button>
-        <div v-if="items.length === 0" key="empty" class="flex h-32 items-center justify-center text-sm text-stone-500">
+        <div v-if="items.length === 0" key="empty" class="flex h-32 items-center justify-center text-sm text-muted">
           没有匹配内容
         </div>
       </TransitionGroup>
     </section>
     <div class="absolute bottom-0 right-0 h-4 w-4 cursor-nwse-resize" title="调整大小" @pointerdown.stop.prevent="startResize">
-      <div class="absolute bottom-1 right-1 h-2 w-2 border-b border-r border-stone-400" />
+      <div class="absolute bottom-1 right-1 h-2 w-2 border-b border-r border-muted" />
     </div>
   </main>
 </template>
@@ -66,6 +66,7 @@ import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue';
 import type { AppSettings, ClipboardItem, QuickInput } from './types';
 import { getSettings, listClipboardItems, listQuickInputs, pasteQuickInputFromFloating } from './lib/commands';
 import { restoreAndTrackWindowSize } from './lib/windowSize';
+import { FONT_OPTIONS, getAvailableFontOptions, getThemeStyle, resolveFontKey, resolveThemeKey, type FontOption } from './theme';
 
 type FloatingSource = 'quick' | 'clipboard';
 interface FloatingItem {
@@ -84,6 +85,7 @@ const triggerText = ref('');
 const searchQuery = ref('');
 const queryInputRef = ref<HTMLInputElement | null>(null);
 const listRef = ref<HTMLElement | null>(null);
+const availableFontOptions = ref<FontOption[]>([FONT_OPTIONS[0]]);
 const settings = ref<AppSettings>({
   history_limit: 2000,
   theme_key: 'warm',
@@ -107,6 +109,9 @@ const settings = ref<AppSettings>({
 });
 
 const selectedItem = computed(() => items.value[selectedIndex.value]);
+const currentThemeKey = computed(() => resolveThemeKey(settings.value.theme_key));
+const currentFontKey = computed(() => resolveFontKey(settings.value.font_key, availableFontOptions.value.map((font) => font.key)));
+const floatingThemeStyle = computed(() => getThemeStyle(currentThemeKey.value, currentFontKey.value, availableFontOptions.value));
 let idleTimer = 0;
 let focusHideTimer = 0;
 let pointerOperationTimer = 0;
@@ -334,6 +339,7 @@ function handlePointerUp() {
 }
 
 onMounted(async () => {
+  availableFontOptions.value = getAvailableFontOptions();
   settings.value = await getSettings();
   await refresh();
   window.addEventListener('keydown', onKeydown);

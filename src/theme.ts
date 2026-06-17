@@ -1,4 +1,4 @@
-export type ThemeKey = 'warm' | 'blue' | 'mint' | 'graphite' | 'violet';
+export type ThemeKey = 'warm' | 'blue' | 'mint' | 'graphite' | 'violet' | 'dark';
 export type FontKey = 'system' | 'microsoft-yahei' | 'simhei' | 'simsun' | 'kaiti';
 
 export interface ThemeOption {
@@ -119,6 +119,24 @@ export const THEME_OPTIONS: ThemeOption[] = [
       muted: '#63586e',
     },
   },
+  {
+    key: 'dark',
+    name: '黑暗模式',
+    description: '深色背景和低亮度边界，适合夜间使用。',
+    colors: {
+      ink: '#f2f4f8',
+      panel: '#111318',
+      sidebar: '#171a21',
+      header: '#1a1e26',
+      line: '#323844',
+      primary: '#60a5fa',
+      primarySoft: '#1f2f45',
+      primaryMuted: '#375f8f',
+      danger: '#f9735b',
+      card: '#1f232b',
+      muted: '#a8b0bd',
+    },
+  },
 ];
 
 export const FONT_OPTIONS: FontOption[] = [
@@ -179,6 +197,7 @@ export function getThemeStyle(
   const font = availableFonts.find((item) => item.key === resolveFontKey(fontKey, availableFonts.map((item) => item.key))) ?? FONT_OPTIONS[0];
 
   return {
+    fontFamily: font.family,
     '--app-font-family': font.family,
     '--color-ink': theme.colors.ink,
     '--color-panel': theme.colors.panel,

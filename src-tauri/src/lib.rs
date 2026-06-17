@@ -145,7 +145,7 @@ enum AppError {
     Clipboard(#[from] arboard::Error),
 }
 
-const THEME_KEYS: [&str; 5] = ["warm", "blue", "mint", "graphite", "violet"];
+const THEME_KEYS: [&str; 6] = ["warm", "blue", "mint", "graphite", "violet", "dark"];
 const FONT_KEYS: [&str; 5] = ["system", "microsoft-yahei", "simhei", "simsun", "kaiti"];
 
 impl Serialize for AppError {
@@ -3191,6 +3191,16 @@ mod tests {
 
         assert_eq!(sanitized.theme_key, "warm");
         assert_eq!(sanitized.font_key, "system");
+    }
+
+    #[test]
+    fn sanitize_settings_keeps_dark_theme() {
+        let mut settings = recommended_settings();
+        settings.theme_key = "dark".into();
+
+        let sanitized = sanitize_settings(settings);
+
+        assert_eq!(sanitized.theme_key, "dark");
     }
 
     #[test]
