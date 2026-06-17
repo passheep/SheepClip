@@ -228,6 +228,28 @@ export function resolveFontWeight(value?: number): FontWeightValue {
   }, DEFAULT_FONT_WEIGHT as FontWeightValue);
 }
 
+function clampFontSize(value: number): number {
+  return Math.min(Math.max(value, MIN_FONT_SIZE), MAX_FONT_SIZE);
+}
+
+function resolveFontScale(fontSize: number) {
+  return {
+    xs: clampFontSize(fontSize - 2),
+    sm: clampFontSize(fontSize),
+    base: clampFontSize(fontSize + 2),
+    lg: clampFontSize(fontSize + 4),
+  };
+}
+
+function resolveFontWeightScale(fontWeight: FontWeightValue) {
+  return {
+    normal: fontWeight,
+    medium: fontWeight === 400 ? 500 : 600,
+    semibold: fontWeight === 600 ? 700 : 600,
+    bold: fontWeight === 600 ? 700 : 600,
+  };
+}
+
 export function getThemeStyle(
   themeKey: string,
   fontKey: string,
@@ -239,6 +261,8 @@ export function getThemeStyle(
   const font = availableFonts.find((item) => item.key === resolveFontKey(fontKey, availableFonts.map((item) => item.key))) ?? FONT_OPTIONS[0];
   const resolvedFontSize = resolveFontSize(fontSize);
   const resolvedFontWeight = resolveFontWeight(fontWeight);
+  const fontScale = resolveFontScale(resolvedFontSize);
+  const fontWeightScale = resolveFontWeightScale(resolvedFontWeight);
 
   return {
     fontFamily: font.family,
@@ -246,7 +270,15 @@ export function getThemeStyle(
     fontWeight: String(resolvedFontWeight),
     '--app-font-family': font.family,
     '--app-font-size': `${resolvedFontSize}px`,
+    '--app-font-size-xs': `${fontScale.xs}px`,
+    '--app-font-size-sm': `${fontScale.sm}px`,
+    '--app-font-size-base': `${fontScale.base}px`,
+    '--app-font-size-lg': `${fontScale.lg}px`,
     '--app-font-weight': String(resolvedFontWeight),
+    '--app-font-weight-normal': String(fontWeightScale.normal),
+    '--app-font-weight-medium': String(fontWeightScale.medium),
+    '--app-font-weight-semibold': String(fontWeightScale.semibold),
+    '--app-font-weight-bold': String(fontWeightScale.bold),
     '--color-ink': theme.colors.ink,
     '--color-panel': theme.colors.panel,
     '--color-sidebar': theme.colors.sidebar,

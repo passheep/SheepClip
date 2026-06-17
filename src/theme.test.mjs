@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import {
   FONT_OPTIONS,
   getAvailableFontOptions,
@@ -34,6 +35,11 @@ test('getThemeStyle returns css variables for selected theme and font', () => {
   assert.equal(style.fontSize, '16px');
   assert.equal(style.fontWeight, '600');
   assert.equal(style['--app-font-size'], '16px');
+  assert.equal(style['--app-font-size-xs'], '14px');
+  assert.equal(style['--app-font-size-sm'], '16px');
+  assert.equal(style['--app-font-size-base'], '18px');
+  assert.equal(style['--app-font-weight-medium'], '600');
+  assert.equal(style['--app-font-weight-semibold'], '700');
   assert.equal(style['--app-font-weight'], '600');
   assert.ok(style['--color-scrollbar-thumb']);
   assert.ok(style['--color-scrollbar-track']);
@@ -53,4 +59,15 @@ test('font size and weight resolve to safe ranges', () => {
   const large = getThemeStyle('warm', 'system', 24, 900, FONT_OPTIONS);
   assert.equal(large['--app-font-size'], '18px');
   assert.equal(large['--app-font-weight'], '600');
+});
+
+test('global styles route utility text classes through appearance variables', () => {
+  const css = readFileSync(new URL('./styles.css', import.meta.url), 'utf8');
+
+  assert.match(css, /--app-font-size-sm/);
+  assert.match(css, /\.text-sm[\s\S]*font-size:\s*var\(--app-font-size-sm\)/);
+  assert.match(css, /\.text-base[\s\S]*font-size:\s*var\(--app-font-size-base\)/);
+  assert.match(css, /\.font-medium[\s\S]*font-weight:\s*var\(--app-font-weight-medium\)/);
+  assert.match(css, /\.font-semibold[\s\S]*font-weight:\s*var\(--app-font-weight-semibold\)/);
+  assert.match(css, /\.rich-text-preview[\s\S]*font-size:\s*var\(--app-font-size-sm\)/);
 });
