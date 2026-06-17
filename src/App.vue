@@ -108,6 +108,7 @@
                 v-for="(item, index) in clipboardItems"
                 :key="`clip-${item.id}`"
                 :data-entry-key="itemKey('clipboard', item.id)"
+                :data-guide="index === 0 ? 'clipboard-first-item' : undefined"
                 class="mb-1 grid min-h-12 w-full grid-cols-[2.25rem_auto_1fr_auto_auto] items-center gap-2 rounded-md border px-3 text-left transition"
                 :class="selectedKey === itemKey('clipboard', item.id) ? 'border-[#6f94a7] bg-[#edf3f5] text-ink shadow-sm ring-2 ring-[#8bb4c5]/70' : 'border-transparent bg-white/65 hover:bg-white'"
                 @click="selectItem('clipboard', item.id)"
@@ -145,7 +146,7 @@
 
           <section v-else-if="activeView === 'quick'" key="quick" data-guide="quick-view" class="grid h-full grid-cols-[1fr_320px]">
             <div class="flex min-h-0 flex-col">
-              <TransitionGroup tag="div" name="list-motion" class="scroll-thin min-h-0 flex-1 overflow-y-auto p-4">
+              <TransitionGroup tag="div" name="list-motion" data-guide="quick-list" class="scroll-thin min-h-0 flex-1 overflow-y-auto p-4">
                 <div
                 v-for="item in quickInputs"
                 :key="`quick-${item.id}`"
@@ -290,23 +291,25 @@
                   </div>
                   <input :value="settings.inline_trigger" readonly class="mt-3 h-9 w-full cursor-default rounded-md border border-line bg-stone-100 px-3 text-sm text-stone-600 outline-none" />
                 </div>
-                <div data-guide="tray-settings" class="flex items-center justify-between rounded-md border border-line bg-white px-3 py-3">
-                  <span>
-                    <span class="block text-sm font-medium">自动隐藏至托盘</span>
-                    <span class="block text-xs text-stone-600">开启后，主窗口关闭或自动关闭时会缩小至托盘；关闭时会显示在任务栏。</span>
-                  </span>
-                  <button type="button" class="relative h-6 w-11 rounded-full transition" :class="settings.auto_hide_to_tray ? 'bg-mint' : 'bg-stone-300'" role="switch" :aria-checked="settings.auto_hide_to_tray" @click="settings.auto_hide_to_tray = !settings.auto_hide_to_tray">
-                    <span class="absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition" :class="settings.auto_hide_to_tray ? 'left-5' : 'left-0.5'" />
-                  </button>
-                </div>
-                <div class="flex items-center justify-between rounded-md border border-line bg-white px-3 py-3">
-                  <span>
-                    <span class="block text-sm font-medium">不聚焦时关闭</span>
-                    <span class="block text-xs text-stone-600">切换到其它应用时自动关闭主窗口；配合“自动隐藏至托盘”可让窗口缩小至托盘，之后双击 Alt 唤起。</span>
-                  </span>
-                  <button type="button" class="relative h-6 w-11 rounded-full transition" :class="settings.hide_on_blur ? 'bg-mint' : 'bg-stone-300'" role="switch" :aria-checked="settings.hide_on_blur" @click="settings.hide_on_blur = !settings.hide_on_blur">
-                    <span class="absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition" :class="settings.hide_on_blur ? 'left-5' : 'left-0.5'" />
-                  </button>
+                <div data-guide="tray-settings" class="space-y-3 rounded-lg">
+                  <div class="flex items-center justify-between rounded-md border border-line bg-white px-3 py-3">
+                    <span>
+                      <span class="block text-sm font-medium">自动隐藏至托盘</span>
+                      <span class="block text-xs text-stone-600">开启后，主窗口关闭或自动关闭时会缩小至托盘；关闭时会显示在任务栏。</span>
+                    </span>
+                    <button type="button" class="relative h-6 w-11 rounded-full transition" :class="settings.auto_hide_to_tray ? 'bg-mint' : 'bg-stone-300'" role="switch" :aria-checked="settings.auto_hide_to_tray" @click="settings.auto_hide_to_tray = !settings.auto_hide_to_tray">
+                      <span class="absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition" :class="settings.auto_hide_to_tray ? 'left-5' : 'left-0.5'" />
+                    </button>
+                  </div>
+                  <div class="flex items-center justify-between rounded-md border border-line bg-white px-3 py-3">
+                    <span>
+                      <span class="block text-sm font-medium">不聚焦时关闭</span>
+                      <span class="block text-xs text-stone-600">切换到其它应用时自动关闭主窗口；配合“自动隐藏至托盘”可让窗口缩小至托盘，之后双击 Alt 唤起。</span>
+                    </span>
+                    <button type="button" class="relative h-6 w-11 rounded-full transition" :class="settings.hide_on_blur ? 'bg-mint' : 'bg-stone-300'" role="switch" :aria-checked="settings.hide_on_blur" @click="settings.hide_on_blur = !settings.hide_on_blur">
+                      <span class="absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition" :class="settings.hide_on_blur ? 'left-5' : 'left-0.5'" />
+                    </button>
+                  </div>
                 </div>
                 <div class="rounded-md border border-line bg-white p-3">
                   <span class="block text-sm font-medium">条目激活后（鼠标双击或回车）</span>
@@ -394,9 +397,9 @@
                     <dt class="text-stone-500">联系开发者</dt>
                     <dd class="font-medium">QQ：903081605</dd>
                   </div>
-                  <div class="border-t border-line pt-3">
+                  <div class="flex items-center justify-between gap-4 border-t border-line pt-3">
                     <dt class="text-stone-500">Git 地址</dt>
-                    <dd class="mt-2">
+                    <dd class="min-w-0">
                       <button type="button" class="inline-flex max-w-full items-center gap-2 rounded-md border border-line bg-[#fbfaf6] px-3 py-2 text-left text-sm text-mint hover:border-mint" @click="openGitRepository">
                         <ExternalLink class="h-4 w-4 shrink-0" />
                         <span class="truncate">https://github.com/passheep/SheepClip</span>
@@ -472,7 +475,9 @@
         <p class="mt-2 text-sm text-stone-600">会恢复推荐设置并重新显示新手引导；已有剪贴板历史和快捷短语不会被删除。</p>
         <div class="mt-4 flex justify-end gap-2">
           <button type="button" class="h-9 rounded-md border border-line bg-white px-3 text-sm" @click="resetConfirmVisible = false">取消</button>
-          <button type="button" class="h-9 rounded-md bg-ink px-3 text-sm text-white" @click="confirmResetSettings">确认重置</button>
+          <button type="button" class="h-9 rounded-md bg-ink px-3 text-sm text-white disabled:cursor-not-allowed disabled:opacity-60" :disabled="resetBusy" @click="confirmResetSettings">
+            {{ resetBusy ? '重置中...' : '确认重置' }}
+          </button>
         </div>
       </section>
     </div>
@@ -487,14 +492,15 @@
         </div>
       </section>
     </div>
-    <div v-if="showOnboarding && currentGuideStep" class="pointer-events-none fixed inset-0 z-[80]">
+    <div v-if="showOnboarding && currentGuideStep" class="fixed inset-0 z-[100]">
+      <div v-if="!guideHighlight" class="pointer-events-none fixed inset-0 z-[100] bg-black/55" />
       <div
         v-if="guideHighlight"
-        class="guide-highlight"
+        class="guide-hole pointer-events-none fixed z-[101]"
         :style="guideHighlightStyle"
       />
       <section
-        class="guide-card pointer-events-auto fixed w-[min(22rem,calc(100vw-2rem))] rounded-lg border border-line bg-panel p-4 shadow-soft"
+        class="guide-card pointer-events-auto fixed z-[102] w-[min(22rem,calc(100vw-2rem))] rounded-lg border border-line bg-panel p-4 shadow-soft"
         :style="guideCardStyle"
       >
         <div class="flex items-start justify-between gap-3">
@@ -580,6 +586,15 @@ import { restoreAndTrackWindowSize } from './lib/windowSize';
 
 type ViewKey = 'clipboard' | 'quick' | 'settings' | 'about';
 type SourceKey = 'clipboard' | 'quick';
+type GuidePlacement = 'right' | 'bottom' | 'left' | 'top';
+type GuideStep = {
+  selector: string;
+  fallbackSelector?: string;
+  title: string;
+  description: string;
+  view: ViewKey;
+  placement: GuidePlacement;
+};
 
 const navItems = [
   { key: 'clipboard' as const, label: '剪贴板历史', icon: ClipboardList },
@@ -607,6 +622,7 @@ const detailItem = ref<ClipboardItem | QuickInput | null>(null);
 const detailKind = ref<SourceKey>('clipboard');
 const clearConfirmVisible = ref(false);
 const resetConfirmVisible = ref(false);
+const resetBusy = ref(false);
 const closeConfirmVisible = ref(false);
 const mainWindowPinned = ref(false);
 const dragQuickId = ref<number | null>(null);
@@ -638,36 +654,43 @@ const settings = reactive<AppSettings>({
   onboarding_completed: false,
 });
 
-const guideSteps = [
+const guideSteps: GuideStep[] = [
   {
     selector: '[data-guide="nav"]',
     title: '切换功能区',
-    description: '左侧可以在剪贴板历史、快捷输入和设置之间切换；窗口变窄时菜单会自动收起。',
+    description: '左侧可以在剪贴板历史、快捷输入和设置之间切换。',
     view: 'clipboard' as ViewKey,
+    placement: 'right' as GuidePlacement,
   },
   {
-    selector: '[data-guide="clipboard-list"]',
+    selector: '[data-guide="clipboard-first-item"]',
+    fallbackSelector: '[data-guide="clipboard-list"]',
     title: '查看剪贴板历史',
     description: '复制文本、图片、文件或富文本后会出现在这里。双击或按 Enter 复制，右键可以查看详情。',
     view: 'clipboard' as ViewKey,
+    placement: 'right' as GuidePlacement,
   },
   {
-    selector: '[data-guide="quick-view"]',
+    selector: '[data-guide="quick-list"]',
+    fallbackSelector: '[data-guide="quick-view"]',
     title: '维护快捷短语',
-    description: '常用手机号、邮箱、地址都可以放到快捷输入里，输入 // 后可快速选择并粘贴。',
+    description: '常用手机号、邮箱、地址都可以放到快捷输入里，在外部软件中输入//后可快速选择并粘贴。',
     view: 'quick' as ViewKey,
+    placement: 'bottom' as GuidePlacement,
   },
   {
     selector: '[data-guide="search"]',
     title: '搜索与键盘操作',
     description: '搜索框支持关键词筛选；上下键移动选中项，Enter 激活条目，Tab 在历史和快捷输入之间切换。',
     view: 'clipboard' as ViewKey,
+    placement: 'bottom' as GuidePlacement,
   },
   {
     selector: '[data-guide="tray-settings"]',
     title: '按习惯隐藏窗口',
     description: '默认不会自动隐藏。你可以开启“自动隐藏至托盘”和“不聚焦时关闭”，切换到其它应用后窗口会缩小到托盘，需要时双击 Alt 再唤起。',
     view: 'settings' as ViewKey,
+    placement: 'left' as GuidePlacement,
   },
 ];
 
@@ -736,15 +759,51 @@ const guideHighlightStyle = computed(() => {
 const guideCardStyle = computed(() => {
   const rect = guideHighlight.value;
   if (!rect) {
-    return { left: '1rem', top: '1rem' };
+    return { left: '1rem', top: '1rem', maxHeight: 'calc(100vh - 2rem)' };
   }
   const cardWidth = Math.min(352, window.innerWidth - 32);
-  const left = Math.min(Math.max(16, rect.right + 18), window.innerWidth - cardWidth - 16);
-  const fallbackLeft = Math.min(Math.max(16, rect.left), window.innerWidth - cardWidth - 16);
-  const top = Math.min(Math.max(16, rect.top), window.innerHeight - 220);
+  const cardHeight = 214;
+  const gap = 18;
+  const margin = 16;
+  const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+  const viewportMaxLeft = Math.max(margin, window.innerWidth - cardWidth - margin);
+  const viewportMaxTop = Math.max(margin, window.innerHeight - cardHeight - margin);
+  const preferredPlacements: GuidePlacement[] = [
+    currentGuideStep.value.placement,
+    'right',
+    'bottom',
+    'left',
+    'top',
+  ];
+  const placements = preferredPlacements.filter((placement, index, list) => list.indexOf(placement) === index);
+  const candidates: Record<GuidePlacement, { left: number; top: number; fits: boolean }> = {
+    right: {
+      left: rect.right + gap,
+      top: clamp(rect.top, margin, viewportMaxTop),
+      fits: rect.right + gap + cardWidth <= window.innerWidth - margin,
+    },
+    bottom: {
+      left: clamp(rect.left, margin, viewportMaxLeft),
+      top: rect.bottom + gap,
+      fits: rect.bottom + gap + cardHeight <= window.innerHeight - margin,
+    },
+    left: {
+      left: rect.left - cardWidth - gap,
+      top: clamp(rect.top, margin, viewportMaxTop),
+      fits: rect.left - cardWidth - gap >= margin,
+    },
+    top: {
+      left: clamp(rect.left, margin, viewportMaxLeft),
+      top: rect.top - cardHeight - gap,
+      fits: rect.top - cardHeight - gap >= margin,
+    },
+  };
+  const chosenPlacement = placements.find((placement) => candidates[placement].fits) ?? currentGuideStep.value.placement;
+  const chosen = candidates[chosenPlacement];
   return {
-    left: `${rect.right + cardWidth + 34 <= window.innerWidth ? left : fallbackLeft}px`,
-    top: `${top}px`,
+    left: `${clamp(chosen.left, margin, viewportMaxLeft)}px`,
+    top: `${clamp(chosen.top, margin, viewportMaxTop)}px`,
+    maxHeight: 'calc(100vh - 2rem)',
   };
 });
 const detailHtml = computed(() => {
@@ -849,6 +908,17 @@ function switchPrimaryView() {
   activeView.value = activeView.value === 'clipboard' ? 'quick' : 'clipboard';
 }
 
+function findGuideElement(step: GuideStep) {
+  return document.querySelector<HTMLElement>(step.selector)
+    ?? (step.fallbackSelector ? document.querySelector<HTMLElement>(step.fallbackSelector) : null);
+}
+
+function scrollGuideTargetIntoView() {
+  const step = currentGuideStep.value;
+  const element = findGuideElement(step);
+  element?.scrollIntoView({ block: step.view === 'settings' ? 'center' : 'nearest', inline: 'nearest' });
+}
+
 function measureGuideHighlight() {
   window.clearTimeout(guideMeasureTimer);
   guideMeasureTimer = window.setTimeout(() => {
@@ -856,13 +926,15 @@ function measureGuideHighlight() {
       guideHighlight.value = null;
       return;
     }
-    const element = document.querySelector<HTMLElement>(currentGuideStep.value.selector);
+    const step = currentGuideStep.value;
+    const element = findGuideElement(step);
     const rect = element?.getBoundingClientRect() ?? null;
     guideHighlight.value = rect && rect.width > 8 && rect.height > 8 ? rect : null;
     if (!guideHighlight.value) {
       window.clearTimeout(guideMeasureTimer);
       guideMeasureTimer = window.setTimeout(() => {
-        const retryElement = document.querySelector<HTMLElement>(currentGuideStep.value!.selector);
+        const retryStep = currentGuideStep.value!;
+        const retryElement = findGuideElement(retryStep);
         const retryRect = retryElement?.getBoundingClientRect() ?? null;
         guideHighlight.value = retryRect && retryRect.width > 8 && retryRect.height > 8 ? retryRect : null;
       }, 180);
@@ -874,7 +946,12 @@ function goGuideStep(index: number) {
   guideIndex.value = Math.min(Math.max(index, 0), guideSteps.length - 1);
   activeView.value = currentGuideStep.value.view;
   nextTick(() => {
+    scrollGuideTargetIntoView();
     measureGuideHighlight();
+    window.setTimeout(() => {
+      scrollGuideTargetIntoView();
+      measureGuideHighlight();
+    }, 120);
     window.setTimeout(measureGuideHighlight, 220);
   });
 }
@@ -1161,6 +1238,8 @@ function requestResetSettings() {
 }
 
 async function confirmResetSettings() {
+  if (resetBusy.value) return;
+  resetBusy.value = true;
   resetConfirmVisible.value = false;
   settingsReady = false;
   try {
@@ -1169,11 +1248,12 @@ async function confirmResetSettings() {
     guideIndex.value = 0;
     statusText.value = '已恢复推荐设置';
     await nextTick();
-    settingsReady = true;
     goGuideStep(0);
   } catch (error) {
-    settingsReady = true;
     statusText.value = error instanceof Error ? error.message : '重置设置失败';
+  } finally {
+    settingsReady = true;
+    resetBusy.value = false;
   }
 }
 

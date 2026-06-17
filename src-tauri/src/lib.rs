@@ -251,6 +251,7 @@ pub fn run() {
 
             setup_main_window(app.handle(), main_pointer_operation_until);
             setup_floating_window(app.handle());
+            apply_window_icons(app.handle());
             setup_single_instance_listener(app.handle().clone(), "SheepClip");
             setup_tray(app.handle())?;
             apply_window_visibility_mode_by_path(app.handle(), &db_path)?;
@@ -364,6 +365,17 @@ fn setup_floating_window(app: &AppHandle) {
                 // drag/resize operations do not immediately close the window.
             }
         });
+    }
+}
+
+fn apply_window_icons(app: &AppHandle) {
+    let Some(icon) = app.default_window_icon().cloned() else {
+        return;
+    };
+    for label in ["main", "floating"] {
+        if let Some(window) = app.get_webview_window(label) {
+            let _ = window.set_icon(icon.clone());
+        }
     }
 }
 
