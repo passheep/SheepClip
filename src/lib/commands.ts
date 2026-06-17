@@ -51,6 +51,8 @@ const fallbackSettings: AppSettings = {
   history_limit: 2000,
   theme_key: 'warm',
   font_key: 'system',
+  font_size: 14,
+  font_weight: 400,
   main_hotkey: 'Alt',
   main_hotkey_enabled: true,
   inline_trigger: '//',

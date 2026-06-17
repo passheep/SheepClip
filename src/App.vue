@@ -109,13 +109,12 @@
                 :key="`clip-${item.id}`"
                 :data-entry-key="itemKey('clipboard', item.id)"
                 :data-guide="index === 0 ? 'clipboard-first-item' : undefined"
-                class="mb-1 grid min-h-12 w-full grid-cols-[2.25rem_auto_1fr_auto_auto] items-center gap-2 rounded-md border px-3 text-left transition"
+                class="mb-1 grid min-h-12 w-full grid-cols-[auto_1fr_auto_auto] items-center gap-2 rounded-md border px-3 text-left transition"
                 :class="selectedKey === itemKey('clipboard', item.id) ? 'border-primaryMuted bg-primarySoft text-ink shadow-sm ring-2 ring-primaryMuted' : 'border-transparent bg-card hover:bg-primarySoft'"
                 @click="selectItem('clipboard', item.id)"
                 @dblclick="copyClipboard(item)"
                 @contextmenu.prevent="showClipboardDetail(item)"
               >
-                <span class="text-center text-xs font-medium tabular-nums text-stone-500">{{ index + 1 }}</span>
                 <span class="flex h-8 w-8 items-center justify-center rounded-md bg-white/80 text-stone-500">
                   <component :is="clipboardKindIcon(item.kind)" class="h-4 w-4" />
                 </span>
@@ -296,6 +295,51 @@
                     <p class="mt-3 text-lg leading-7">{{ font.sample }}</p>
                     <p class="mt-1 text-xs text-muted">SheepClip 0123 ABC</p>
                   </button>
+                </div>
+              </section>
+
+              <section class="mt-6">
+                <h3 class="text-xs font-semibold text-muted">文字显示</h3>
+                <div class="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
+                  <div class="rounded-md border border-line bg-card p-3">
+                    <div class="flex items-center justify-between gap-3">
+                      <span class="text-sm font-medium">字号大小</span>
+                      <span class="rounded bg-sidebar px-2 py-1 text-xs text-muted">{{ currentFontSize }}px</span>
+                    </div>
+                    <input
+                      v-model.number="settings.font_size"
+                      type="range"
+                      :min="MIN_FONT_SIZE"
+                      :max="MAX_FONT_SIZE"
+                      step="1"
+                      class="mt-4 w-full accent-mint"
+                      @change="settings.font_size = resolveFontSize(settings.font_size)"
+                    />
+                    <div class="mt-2 flex justify-between text-xs text-muted">
+                      <span>{{ MIN_FONT_SIZE }}px</span>
+                      <span>{{ MAX_FONT_SIZE }}px</span>
+                    </div>
+                  </div>
+
+                  <div class="rounded-md border border-line bg-card p-3">
+                    <div class="flex items-center justify-between gap-3">
+                      <span class="text-sm font-medium">字体粗细</span>
+                      <span class="rounded bg-sidebar px-2 py-1 text-xs text-muted">{{ currentFontWeight }}</span>
+                    </div>
+                    <div class="mt-4 grid grid-cols-3 gap-2 rounded-md bg-sidebar p-1">
+                      <button
+                        v-for="weight in FONT_WEIGHT_OPTIONS"
+                        :key="weight"
+                        type="button"
+                        class="h-8 rounded text-xs transition"
+                        :class="currentFontWeight === weight ? 'bg-card text-ink shadow-sm' : 'text-muted'"
+                        :style="{ fontWeight: weight }"
+                        @click="settings.font_weight = weight"
+                      >
+                        {{ fontWeightLabel(weight) }}
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </section>
             </div>
@@ -660,10 +704,15 @@ import {
 import { restoreAndTrackWindowSize } from './lib/windowSize';
 import {
   FONT_OPTIONS,
+  FONT_WEIGHT_OPTIONS,
+  MAX_FONT_SIZE,
+  MIN_FONT_SIZE,
   THEME_OPTIONS,
   getAvailableFontOptions,
   getThemeStyle,
+  resolveFontSize,
   resolveFontKey,
+  resolveFontWeight,
   resolveThemeKey,
   type FontKey,
   type FontOption,
@@ -727,6 +776,8 @@ const settings = reactive<AppSettings>({
   history_limit: 2000,
   theme_key: 'warm',
   font_key: 'system',
+  font_size: 14,
+  font_weight: 400,
   main_hotkey: 'Alt',
   main_hotkey_enabled: true,
   inline_trigger: '//',
@@ -834,7 +885,9 @@ const sidebarCollapsed = computed(() => autoSidebarCollapsed.value || manualSide
 const activeViewTitle = computed(() => navItems.find((item) => item.key === activeView.value)?.label ?? 'SheepClip');
 const currentThemeKey = computed(() => resolveThemeKey(settings.theme_key));
 const currentFontKey = computed(() => resolveFontKey(settings.font_key, availableFontOptions.value.map((font) => font.key)));
-const appThemeStyle = computed(() => getThemeStyle(currentThemeKey.value, currentFontKey.value, availableFontOptions.value));
+const currentFontSize = computed(() => resolveFontSize(settings.font_size));
+const currentFontWeight = computed(() => resolveFontWeight(settings.font_weight));
+const appThemeStyle = computed(() => getThemeStyle(currentThemeKey.value, currentFontKey.value, currentFontSize.value, currentFontWeight.value, availableFontOptions.value));
 const detailClipboardItem = computed(() => detailKind.value === 'clipboard' ? detailItem.value as ClipboardItem | null : null);
 const detailTextSelectable = computed(() => detailKind.value === 'quick' || !detailClipboardItem.value || detailClipboardItem.value.kind === 'text');
 const canAddDetailToQuickInput = computed(() => detailKind.value === 'clipboard' && detailClipboardItem.value?.kind === 'text');
@@ -947,6 +1000,8 @@ function refreshAvailableFonts() {
 function normalizeAppearanceSettings() {
   settings.theme_key = resolveThemeKey(settings.theme_key);
   settings.font_key = resolveFontKey(settings.font_key, availableFontOptions.value.map((font) => font.key));
+  settings.font_size = resolveFontSize(settings.font_size);
+  settings.font_weight = resolveFontWeight(settings.font_weight);
 }
 
 function selectTheme(themeKey: ThemeKey) {
@@ -955,6 +1010,12 @@ function selectTheme(themeKey: ThemeKey) {
 
 function selectFont(fontKey: FontKey) {
   settings.font_key = resolveFontKey(fontKey, availableFontOptions.value.map((font) => font.key));
+}
+
+function fontWeightLabel(weight: number) {
+  if (weight === 600) return '偏粗';
+  if (weight === 500) return '适中';
+  return '常规';
 }
 
 function selectItem(source: SourceKey, id: number) {

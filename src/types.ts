@@ -26,6 +26,8 @@ export interface AppSettings {
   history_limit: number;
   theme_key: string;
   font_key: string;
+  font_size: number;
+  font_weight: number;
   main_hotkey: 'Alt' | 'Ctrl';
   main_hotkey_enabled: boolean;
   inline_trigger: string;

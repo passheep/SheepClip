@@ -15,6 +15,8 @@
   --color-danger: #b25f3a;
   --color-card: #ffffff;
   --color-muted: #57534e;
+  --color-scrollbar-thumb: #bcb5aa;
+  --color-scrollbar-track: #eeeae2;
   font-family:
     var(--app-font-family);
   color: var(--color-ink);
@@ -66,15 +68,27 @@ button {
 
 .scroll-thin {
   scrollbar-width: thin;
+  scrollbar-color: var(--color-scrollbar-thumb) var(--color-scrollbar-track);
 }
 
 .scroll-thin::-webkit-scrollbar {
   width: 8px;
+  height: 8px;
+}
+
+.scroll-thin::-webkit-scrollbar-track {
+  background: var(--color-scrollbar-track);
+  border-radius: 999px;
 }
 
 .scroll-thin::-webkit-scrollbar-thumb {
-  background: color-mix(in srgb, var(--color-line) 80%, var(--color-ink) 20%);
+  background: var(--color-scrollbar-thumb);
+  border: 2px solid var(--color-scrollbar-track);
   border-radius: 999px;
+}
+
+.scroll-thin::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary-muted);
 }
 
 [data-theme="dark"] :where(

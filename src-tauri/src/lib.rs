@@ -115,6 +115,8 @@ struct AppSettings {
     history_limit: i64,
     theme_key: String,
     font_key: String,
+    font_size: i64,
+    font_weight: i64,
     main_hotkey: String,
     main_hotkey_enabled: bool,
     inline_trigger: String,
@@ -146,7 +148,7 @@ enum AppError {
 }
 
 const THEME_KEYS: [&str; 6] = ["warm", "blue", "mint", "graphite", "violet", "dark"];
-const FONT_KEYS: [&str; 5] = ["system", "microsoft-yahei", "simhei", "simsun", "kaiti"];
+const FONT_KEYS: [&str; 6] = ["system", "microsoft-yahei", "simhei", "simsun", "kaiti", "fangsong"];
 
 impl Serialize for AppError {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
@@ -1657,6 +1659,8 @@ fn read_settings(conn: &Connection) -> AppResult<AppSettings> {
         history_limit: read_i64(conn, "history_limit", 2000)?.clamp(50, 10000),
         theme_key: read_text(conn, "theme_key", "warm")?,
         font_key: read_text(conn, "font_key", "system")?,
+        font_size: read_i64(conn, "font_size", 14)?.clamp(12, 18),
+        font_weight: normalize_font_weight(read_i64(conn, "font_weight", 400)?),
         main_hotkey: read_text(conn, "main_hotkey", "Alt")?,
         main_hotkey_enabled: read_bool(conn, "main_hotkey_enabled", true)?,
         inline_trigger: read_text(conn, "inline_trigger", "//")?,
@@ -1685,6 +1689,8 @@ fn recommended_settings() -> AppSettings {
         history_limit: 2000,
         theme_key: "warm".into(),
         font_key: "system".into(),
+        font_size: 14,
+        font_weight: 400,
         main_hotkey: "Alt".into(),
         main_hotkey_enabled: true,
         inline_trigger: "//".into(),
@@ -1717,6 +1723,8 @@ fn sanitize_settings(settings: AppSettings) -> AppSettings {
         } else {
             "system".into()
         },
+        font_size: settings.font_size.clamp(12, 18),
+        font_weight: normalize_font_weight(settings.font_weight),
         main_hotkey: if settings.main_hotkey == "Ctrl" {
             "Ctrl".into()
         } else {
@@ -1744,11 +1752,20 @@ fn sanitize_settings(settings: AppSettings) -> AppSettings {
     }
 }
 
+fn normalize_font_weight(value: i64) -> i64 {
+    [400, 500, 600]
+        .into_iter()
+        .min_by_key(|weight| (value - *weight).abs())
+        .unwrap_or(400)
+}
+
 fn settings_entries(settings: &AppSettings) -> Vec<(&'static str, String)> {
     vec![
         ("history_limit", settings.history_limit.to_string()),
         ("theme_key", settings.theme_key.clone()),
         ("font_key", settings.font_key.clone()),
+        ("font_size", settings.font_size.to_string()),
+        ("font_weight", settings.font_weight.to_string()),
         ("main_hotkey", settings.main_hotkey.clone()),
         (
             "main_hotkey_enabled",
@@ -3206,11 +3223,25 @@ mod tests {
     }
 
     #[test]
+    fn sanitize_settings_clamps_appearance_numbers() {
+        let mut settings = recommended_settings();
+        settings.font_size = 8;
+        settings.font_weight = 900;
+
+        let sanitized = sanitize_settings(settings);
+
+        assert_eq!(sanitized.font_size, 12);
+        assert_eq!(sanitized.font_weight, 600);
+    }
+
+    #[test]
     fn settings_entries_include_theme_fields() {
         let settings = recommended_settings();
         let entries = settings_entries(&settings);
 
         assert!(entries.iter().any(|(key, value)| *key == "theme_key" && value == "warm"));
         assert!(entries.iter().any(|(key, value)| *key == "font_key" && value == "system"));
+        assert!(entries.iter().any(|(key, value)| *key == "font_size" && value == "14"));
+        assert!(entries.iter().any(|(key, value)| *key == "font_weight" && value == "400"));
     }
 }

@@ -16,8 +16,8 @@ test('resolveThemeKey falls back to warm for unknown keys', () => {
 });
 
 test('getAvailableFontOptions hides unavailable built-in fonts but keeps system', () => {
-  const fonts = getAvailableFontOptions((fontFamily) => fontFamily === 'Microsoft YaHei');
-  assert.deepEqual(fonts.map((font) => font.key), ['system', 'microsoft-yahei']);
+  const fonts = getAvailableFontOptions((fontFamily) => ['Microsoft YaHei', 'FangSong'].includes(fontFamily));
+  assert.deepEqual(fonts.map((font) => font.key), ['system', 'microsoft-yahei', 'fangsong']);
 });
 
 test('resolveFontKey allows only currently available font keys', () => {
@@ -27,14 +27,30 @@ test('resolveFontKey allows only currently available font keys', () => {
 });
 
 test('getThemeStyle returns css variables for selected theme and font', () => {
-  const style = getThemeStyle('blue', 'simhei', FONT_OPTIONS);
+  const style = getThemeStyle('blue', 'simhei', 16, 600, FONT_OPTIONS);
   assert.equal(style['--color-primary'], '#2563eb');
   assert.match(style['--app-font-family'], /SimHei/);
   assert.match(style.fontFamily, /SimHei/);
+  assert.equal(style.fontSize, '16px');
+  assert.equal(style.fontWeight, '600');
+  assert.equal(style['--app-font-size'], '16px');
+  assert.equal(style['--app-font-weight'], '600');
+  assert.ok(style['--color-scrollbar-thumb']);
+  assert.ok(style['--color-scrollbar-track']);
 });
 
 test('dark theme exposes dark surface colors', () => {
-  const style = getThemeStyle('dark', 'system', FONT_OPTIONS);
+  const style = getThemeStyle('dark', 'system', 14, 400, FONT_OPTIONS);
   assert.equal(style['--color-panel'], '#111318');
   assert.equal(style['--color-card'], '#1f232b');
+});
+
+test('font size and weight resolve to safe ranges', () => {
+  const small = getThemeStyle('warm', 'system', 8, 200, FONT_OPTIONS);
+  assert.equal(small['--app-font-size'], '12px');
+  assert.equal(small['--app-font-weight'], '400');
+
+  const large = getThemeStyle('warm', 'system', 24, 900, FONT_OPTIONS);
+  assert.equal(large['--app-font-size'], '18px');
+  assert.equal(large['--app-font-weight'], '600');
 });

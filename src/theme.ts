@@ -1,5 +1,5 @@
 export type ThemeKey = 'warm' | 'blue' | 'mint' | 'graphite' | 'violet' | 'dark';
-export type FontKey = 'system' | 'microsoft-yahei' | 'simhei' | 'simsun' | 'kaiti';
+export type FontKey = 'system' | 'microsoft-yahei' | 'simhei' | 'simsun' | 'kaiti' | 'fangsong';
 
 export interface ThemeOption {
   key: ThemeKey;
@@ -17,6 +17,8 @@ export interface ThemeOption {
     danger: string;
     card: string;
     muted: string;
+    scrollbarThumb: string;
+    scrollbarTrack: string;
   };
 }
 
@@ -45,6 +47,8 @@ export const THEME_OPTIONS: ThemeOption[] = [
       danger: '#b25f3a',
       card: '#ffffff',
       muted: '#57534e',
+      scrollbarThumb: '#bcb5aa',
+      scrollbarTrack: '#eeeae2',
     },
   },
   {
@@ -63,6 +67,8 @@ export const THEME_OPTIONS: ThemeOption[] = [
       danger: '#dc633a',
       card: '#ffffff',
       muted: '#526174',
+      scrollbarThumb: '#a8bfdc',
+      scrollbarTrack: '#e3edf8',
     },
   },
   {
@@ -81,6 +87,8 @@ export const THEME_OPTIONS: ThemeOption[] = [
       danger: '#c05f3d',
       card: '#ffffff',
       muted: '#4f635b',
+      scrollbarThumb: '#9acdb4',
+      scrollbarTrack: '#dcefe5',
     },
   },
   {
@@ -99,6 +107,8 @@ export const THEME_OPTIONS: ThemeOption[] = [
       danger: '#b4533a',
       card: '#ffffff',
       muted: '#565d66',
+      scrollbarThumb: '#b5bac2',
+      scrollbarTrack: '#e5e8ec',
     },
   },
   {
@@ -117,6 +127,8 @@ export const THEME_OPTIONS: ThemeOption[] = [
       danger: '#bd5a4a',
       card: '#ffffff',
       muted: '#63586e',
+      scrollbarThumb: '#c6afd9',
+      scrollbarTrack: '#f0e6f7',
     },
   },
   {
@@ -135,6 +147,8 @@ export const THEME_OPTIONS: ThemeOption[] = [
       danger: '#f9735b',
       card: '#1f232b',
       muted: '#a8b0bd',
+      scrollbarThumb: '#4b5567',
+      scrollbarTrack: '#171a21',
     },
   },
 ];
@@ -174,10 +188,23 @@ export const FONT_OPTIONS: FontOption[] = [
     family: 'KaiTi, "楷体", serif',
     detectFamily: 'KaiTi',
   },
+  {
+    key: 'fangsong',
+    name: '仿宋',
+    sample: '仿宋',
+    family: 'FangSong, "FangSong_GB2312", "仿宋", serif',
+    detectFamily: 'FangSong',
+  },
 ];
 
 const DEFAULT_THEME_KEY: ThemeKey = 'warm';
 const DEFAULT_FONT_KEY: FontKey = 'system';
+export const DEFAULT_FONT_SIZE = 14;
+export const MIN_FONT_SIZE = 12;
+export const MAX_FONT_SIZE = 18;
+export const DEFAULT_FONT_WEIGHT = 400;
+export const FONT_WEIGHT_OPTIONS = [400, 500, 600] as const;
+export type FontWeightValue = typeof FONT_WEIGHT_OPTIONS[number];
 
 export function resolveThemeKey(key?: string): ThemeKey {
   return THEME_OPTIONS.some((theme) => theme.key === key) ? key as ThemeKey : DEFAULT_THEME_KEY;
@@ -188,17 +215,38 @@ export function resolveFontKey(key?: string, availableKeys: string[] = FONT_OPTI
   return FONT_OPTIONS.some((font) => font.key === key) && availableKeys.includes(key) ? key as FontKey : DEFAULT_FONT_KEY;
 }
 
+export function resolveFontSize(value?: number): number {
+  if (!Number.isFinite(value)) return DEFAULT_FONT_SIZE;
+  return Math.min(Math.max(Math.round(value as number), MIN_FONT_SIZE), MAX_FONT_SIZE);
+}
+
+export function resolveFontWeight(value?: number): FontWeightValue {
+  const normalized = Number(value);
+  if (!Number.isFinite(normalized)) return DEFAULT_FONT_WEIGHT;
+  return FONT_WEIGHT_OPTIONS.reduce((closest, option) => {
+    return Math.abs(option - normalized) < Math.abs(closest - normalized) ? option : closest;
+  }, DEFAULT_FONT_WEIGHT as FontWeightValue);
+}
+
 export function getThemeStyle(
   themeKey: string,
   fontKey: string,
+  fontSize = DEFAULT_FONT_SIZE,
+  fontWeight = DEFAULT_FONT_WEIGHT,
   availableFonts: FontOption[] = getAvailableFontOptions(),
 ): Record<string, string> {
   const theme = THEME_OPTIONS.find((item) => item.key === resolveThemeKey(themeKey)) ?? THEME_OPTIONS[0];
   const font = availableFonts.find((item) => item.key === resolveFontKey(fontKey, availableFonts.map((item) => item.key))) ?? FONT_OPTIONS[0];
+  const resolvedFontSize = resolveFontSize(fontSize);
+  const resolvedFontWeight = resolveFontWeight(fontWeight);
 
   return {
     fontFamily: font.family,
+    fontSize: `${resolvedFontSize}px`,
+    fontWeight: String(resolvedFontWeight),
     '--app-font-family': font.family,
+    '--app-font-size': `${resolvedFontSize}px`,
+    '--app-font-weight': String(resolvedFontWeight),
     '--color-ink': theme.colors.ink,
     '--color-panel': theme.colors.panel,
     '--color-sidebar': theme.colors.sidebar,
@@ -210,6 +258,8 @@ export function getThemeStyle(
     '--color-danger': theme.colors.danger,
     '--color-card': theme.colors.card,
     '--color-muted': theme.colors.muted,
+    '--color-scrollbar-thumb': theme.colors.scrollbarThumb,
+    '--color-scrollbar-track': theme.colors.scrollbarTrack,
   };
 }
 

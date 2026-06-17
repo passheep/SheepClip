@@ -66,7 +66,7 @@ import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue';
 import type { AppSettings, ClipboardItem, QuickInput } from './types';
 import { getSettings, listClipboardItems, listQuickInputs, pasteQuickInputFromFloating } from './lib/commands';
 import { restoreAndTrackWindowSize } from './lib/windowSize';
-import { FONT_OPTIONS, getAvailableFontOptions, getThemeStyle, resolveFontKey, resolveThemeKey, type FontOption } from './theme';
+import { FONT_OPTIONS, getAvailableFontOptions, getThemeStyle, resolveFontKey, resolveFontSize, resolveFontWeight, resolveThemeKey, type FontOption } from './theme';
 
 type FloatingSource = 'quick' | 'clipboard';
 interface FloatingItem {
@@ -90,6 +90,8 @@ const settings = ref<AppSettings>({
   history_limit: 2000,
   theme_key: 'warm',
   font_key: 'system',
+  font_size: 14,
+  font_weight: 400,
   main_hotkey: 'Alt',
   main_hotkey_enabled: true,
   inline_trigger: '//',
@@ -111,7 +113,9 @@ const settings = ref<AppSettings>({
 const selectedItem = computed(() => items.value[selectedIndex.value]);
 const currentThemeKey = computed(() => resolveThemeKey(settings.value.theme_key));
 const currentFontKey = computed(() => resolveFontKey(settings.value.font_key, availableFontOptions.value.map((font) => font.key)));
-const floatingThemeStyle = computed(() => getThemeStyle(currentThemeKey.value, currentFontKey.value, availableFontOptions.value));
+const currentFontSize = computed(() => resolveFontSize(settings.value.font_size));
+const currentFontWeight = computed(() => resolveFontWeight(settings.value.font_weight));
+const floatingThemeStyle = computed(() => getThemeStyle(currentThemeKey.value, currentFontKey.value, currentFontSize.value, currentFontWeight.value, availableFontOptions.value));
 let idleTimer = 0;
 let focusHideTimer = 0;
 let pointerOperationTimer = 0;
