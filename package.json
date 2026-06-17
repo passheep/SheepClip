@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "build:theme-test": "tsc src/theme.ts --target ES2020 --module ES2020 --moduleResolution Node --outDir src/theme.dist --skipLibCheck",
+    "test:theme": "npm run build:theme-test && node src/theme.test.mjs",
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview",
     "tauri": "tauri",
