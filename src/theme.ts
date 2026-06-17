@@ -166,6 +166,7 @@ export function resolveThemeKey(key?: string): ThemeKey {
 }
 
 export function resolveFontKey(key?: string, availableKeys: string[] = FONT_OPTIONS.map((font) => font.key)): FontKey {
+  if (!key) return DEFAULT_FONT_KEY;
   return FONT_OPTIONS.some((font) => font.key === key) && availableKeys.includes(key) ? key as FontKey : DEFAULT_FONT_KEY;
 }
 

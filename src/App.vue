@@ -1,7 +1,7 @@
 <template>
-  <main class="relative h-screen select-none overflow-hidden text-ink" @contextmenu.prevent @keydown.tab.prevent="switchPrimaryView">
+  <main class="relative h-screen select-none overflow-hidden text-ink" :style="appThemeStyle" @contextmenu.prevent @keydown.tab.prevent="switchPrimaryView">
     <section class="flex h-full w-full overflow-hidden border bg-panel transition" :class="mainWindowPinned ? 'border-[3px] border-rust shadow-[inset_0_0_0_1px_rgba(178,95,58,0.35),0_0_0_2px_rgba(178,95,58,0.25)]' : 'border-line'">
-      <aside class="flex shrink-0 flex-col border-r border-line bg-[#eceae2] transition-[width]" :class="sidebarCollapsed ? 'w-16' : 'w-56'">
+      <aside class="flex shrink-0 flex-col border-r border-line bg-sidebar transition-[width]" :class="sidebarCollapsed ? 'w-16' : 'w-56'">
         <div data-tauri-drag-region class="border-b border-line px-3 py-3" @pointerdown="startWindowDrag">
           <div class="flex items-center gap-3">
             <img :src="logoUrl" alt="" class="h-9 w-9 shrink-0 rounded-md" />
@@ -18,7 +18,7 @@
             :key="item.key"
             type="button"
             class="flex h-10 w-full items-center gap-3 rounded-md px-3 text-left text-sm transition"
-            :class="activeView === item.key ? 'bg-ink text-white' : 'text-stone-700 hover:bg-white/70'"
+            :class="activeView === item.key ? 'bg-mint text-white' : 'text-muted hover:bg-white/70'"
             :title="item.label"
             @click="activeView = item.key"
           >
@@ -27,7 +27,7 @@
           </button>
           <button
             type="button"
-            class="flex h-10 w-full items-center gap-3 rounded-md px-3 text-left text-sm text-stone-700 transition hover:bg-white/70"
+            class="flex h-10 w-full items-center gap-3 rounded-md px-3 text-left text-sm text-muted transition hover:bg-white/70"
             title="收起/展开"
             @click="manualSidebarCollapsed = !manualSidebarCollapsed"
           >
@@ -60,8 +60,8 @@
       </aside>
 
       <section class="flex min-w-0 flex-1 flex-col">
-        <div data-tauri-drag-region class="flex h-11 shrink-0 items-center justify-between border-b border-line bg-[#fbfaf6] px-4" @pointerdown="startWindowDrag">
-          <div class="min-w-0 text-sm font-medium text-stone-700">{{ activeViewTitle }}</div>
+        <div data-tauri-drag-region class="flex h-11 shrink-0 items-center justify-between border-b border-line bg-header px-4" @pointerdown="startWindowDrag">
+          <div class="min-w-0 text-sm font-medium text-muted">{{ activeViewTitle }}</div>
           <div class="no-drag flex items-center gap-1">
             <button type="button" class="flex h-8 w-8 items-center justify-center rounded-md transition" :class="mainWindowPinned ? 'bg-rust text-white' : 'text-stone-600 hover:bg-white'" title="始终置顶" @click="toggleMainWindowPinned">
               <Pin class="h-4 w-4" />
@@ -77,7 +77,7 @@
             </button>
           </div>
         </div>
-        <header v-if="activeView === 'clipboard' || activeView === 'quick'" data-guide="search" class="border-b border-line bg-[#fbfaf6] px-5 py-4">
+        <header v-if="activeView === 'clipboard' || activeView === 'quick'" data-guide="search" class="border-b border-line bg-header px-5 py-4">
           <div class="flex items-center gap-3">
             <div class="no-drag relative flex-1">
               <Search class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-500" />
@@ -110,7 +110,7 @@
                 :data-entry-key="itemKey('clipboard', item.id)"
                 :data-guide="index === 0 ? 'clipboard-first-item' : undefined"
                 class="mb-1 grid min-h-12 w-full grid-cols-[2.25rem_auto_1fr_auto_auto] items-center gap-2 rounded-md border px-3 text-left transition"
-                :class="selectedKey === itemKey('clipboard', item.id) ? 'border-[#6f94a7] bg-[#edf3f5] text-ink shadow-sm ring-2 ring-[#8bb4c5]/70' : 'border-transparent bg-white/65 hover:bg-white'"
+                :class="selectedKey === itemKey('clipboard', item.id) ? 'border-primaryMuted bg-primarySoft text-ink shadow-sm ring-2 ring-primaryMuted' : 'border-transparent bg-white/65 hover:bg-white'"
                 @click="selectItem('clipboard', item.id)"
                 @dblclick="copyClipboard(item)"
                 @contextmenu.prevent="showClipboardDetail(item)"
@@ -160,7 +160,7 @@
                   :data-quick-id="item.id"
                   class="grid w-full cursor-grab grid-cols-[auto_1fr] items-center gap-3 rounded-md border px-3 py-2 text-left transition duration-150 active:cursor-grabbing"
                   :class="[
-                    selectedKey === itemKey('quick', item.id) ? 'border-[#6f94a7] bg-[#edf3f5] text-ink shadow-sm ring-2 ring-[#8bb4c5]/70' : 'border-transparent bg-white/65 hover:bg-white',
+                    selectedKey === itemKey('quick', item.id) ? 'border-primaryMuted bg-primarySoft text-ink shadow-sm ring-2 ring-primaryMuted' : 'border-transparent bg-white/65 hover:bg-white',
                     dragQuickId === item.id ? 'scale-[0.99] opacity-70 shadow-soft ring-2 ring-rust/50' : '',
                     dragQuickId && dragQuickTargetId === item.id && dragQuickId !== item.id ? 'translate-y-0.5' : ''
                   ]"
@@ -176,7 +176,7 @@
                   <span class="min-w-0">
                     <span class="block truncate text-sm">{{ item.content }}</span>
                     <span class="mt-1 flex flex-wrap gap-1">
-                      <span v-for="tag in item.tags" :key="tag" class="rounded bg-[#eceae2] px-1.5 py-0.5 text-xs text-stone-600">{{ tag }}</span>
+                      <span v-for="tag in item.tags" :key="tag" class="rounded bg-sidebar px-1.5 py-0.5 text-xs text-stone-600">{{ tag }}</span>
                     </span>
                   </span>
                 </div>
@@ -184,15 +184,15 @@
                 </div>
                 <EmptyState v-if="quickInputs.length === 0" key="quick-empty" label="暂无快捷输入" />
               </TransitionGroup>
-              <div class="border-t border-line bg-[#fbfaf6] p-3">
-                <button type="button" class="flex h-9 w-full items-center justify-center gap-2 rounded-md bg-ink px-3 text-sm text-white" @click="beginCreateQuickInput">
+              <div class="border-t border-line bg-header p-3">
+                <button type="button" class="flex h-9 w-full items-center justify-center gap-2 rounded-md bg-mint px-3 text-sm text-white" @click="beginCreateQuickInput">
                   <Plus class="h-4 w-4" />
                   新增快捷输入
                 </button>
               </div>
             </div>
 
-            <form class="border-l border-line bg-[#fbfaf6] p-4" @submit.prevent="submitQuickInput">
+            <form class="border-l border-line bg-header p-4" @submit.prevent="submitQuickInput">
               <h2 class="text-sm font-semibold">{{ quickForm.id ? '编辑快捷输入' : '新增快捷输入' }}</h2>
               <label class="mt-4 block text-xs font-medium text-stone-600">内容</label>
               <textarea v-model="quickForm.content" class="mt-1 h-28 w-full resize-none rounded-md border border-line bg-white p-3 text-sm outline-none focus:border-mint" />
@@ -210,7 +210,7 @@
               </div>
 
               <div class="mt-4">
-                <button type="submit" class="flex h-9 w-full items-center justify-center gap-2 rounded-md bg-ink px-3 text-sm text-white">
+                <button type="submit" class="flex h-9 w-full items-center justify-center gap-2 rounded-md bg-mint px-3 text-sm text-white">
                   <Save class="h-4 w-4" />
                   保存
                 </button>
@@ -226,6 +226,79 @@
                 删除
               </button>
             </form>
+          </section>
+
+          <section v-else-if="activeView === 'theme'" key="theme" class="h-full overflow-y-auto p-5">
+            <div class="max-w-4xl">
+              <div>
+                <h2 class="text-sm font-semibold">主题</h2>
+                <p class="mt-1 text-xs text-muted">选择内置颜色和本机可用字体，切换后会自动保存。</p>
+              </div>
+
+              <section class="mt-5">
+                <h3 class="text-xs font-semibold text-muted">颜色主题</h3>
+                <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                  <button
+                    v-for="theme in THEME_OPTIONS"
+                    :key="theme.key"
+                    type="button"
+                    class="group rounded-md border bg-card p-3 text-left transition hover:-translate-y-0.5 hover:shadow-soft"
+                    :class="currentThemeKey === theme.key ? 'border-mint ring-2 ring-primaryMuted' : 'border-line'"
+                    @click="selectTheme(theme.key)"
+                  >
+                    <div class="overflow-hidden rounded-md border border-line" :style="{ backgroundColor: theme.colors.panel }">
+                      <div class="flex h-24">
+                        <div class="w-16 border-r" :style="{ backgroundColor: theme.colors.sidebar, borderColor: theme.colors.line }">
+                          <div class="m-2 h-4 rounded" :style="{ backgroundColor: theme.colors.primary }" />
+                          <div class="mx-2 mt-2 h-3 rounded bg-white/70" />
+                          <div class="mx-2 mt-1 h-3 rounded bg-white/50" />
+                        </div>
+                        <div class="min-w-0 flex-1">
+                          <div class="h-6 border-b" :style="{ backgroundColor: theme.colors.header, borderColor: theme.colors.line }" />
+                          <div class="space-y-1.5 p-2">
+                            <div class="h-4 rounded" :style="{ backgroundColor: theme.colors.primarySoft, border: `1px solid ${theme.colors.primaryMuted}` }" />
+                            <div class="h-4 rounded bg-white/80" />
+                            <div class="flex gap-1">
+                              <div class="h-4 flex-1 rounded bg-white/80" />
+                              <div class="h-4 w-8 rounded" :style="{ backgroundColor: theme.colors.primary }" />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="mt-3 flex items-start justify-between gap-3">
+                      <span>
+                        <span class="block text-sm font-medium">{{ theme.name }}</span>
+                        <span class="mt-1 block text-xs leading-5 text-muted">{{ theme.description }}</span>
+                      </span>
+                      <Check v-if="currentThemeKey === theme.key" class="mt-0.5 h-4 w-4 shrink-0 text-mint" />
+                    </div>
+                  </button>
+                </div>
+              </section>
+
+              <section class="mt-6">
+                <h3 class="text-xs font-semibold text-muted">文字字体</h3>
+                <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                  <button
+                    v-for="font in availableFontOptions"
+                    :key="font.key"
+                    type="button"
+                    class="rounded-md border bg-card p-3 text-left transition hover:-translate-y-0.5 hover:shadow-soft"
+                    :class="currentFontKey === font.key ? 'border-mint ring-2 ring-primaryMuted' : 'border-line'"
+                    :style="{ fontFamily: font.family }"
+                    @click="selectFont(font.key)"
+                  >
+                    <div class="flex items-center justify-between gap-3">
+                      <span class="text-sm font-medium">{{ font.name }}</span>
+                      <Check v-if="currentFontKey === font.key" class="h-4 w-4 text-mint" />
+                    </div>
+                    <p class="mt-3 text-lg leading-7">{{ font.sample }}</p>
+                    <p class="mt-1 text-xs text-muted">SheepClip 0123 ABC</p>
+                  </button>
+                </div>
+              </section>
+            </div>
           </section>
 
           <section v-else-if="activeView === 'settings'" key="settings" data-guide="settings-view" data-guide-scroll class="h-full overflow-y-auto p-5">
@@ -329,7 +402,7 @@
                     </div>
                   </div>
                   <div class="mt-3 flex flex-wrap gap-2">
-                    <span v-for="tag in tags" :key="tag" class="flex h-8 items-center gap-1 rounded-md bg-[#eceae2] px-2 text-xs">
+                    <span v-for="tag in tags" :key="tag" class="flex h-8 items-center gap-1 rounded-md bg-sidebar px-2 text-xs">
                       {{ tag }}
                       <button type="button" class="text-stone-500 hover:text-rust" title="删除标签" @click="removeTag(tag)">
                         <X class="h-3 w-3" />
@@ -338,7 +411,7 @@
                   </div>
                   <div class="mt-3 flex gap-2">
                     <input v-model="newTagName" class="h-9 flex-1 rounded-md border border-line bg-white px-3 text-sm outline-none focus:border-mint" placeholder="新增标签，如 ops" @keydown.enter.prevent="createTag" />
-                    <button type="button" class="flex h-9 items-center gap-2 rounded-md bg-ink px-3 text-sm text-white" @click="createTag">
+                    <button type="button" class="flex h-9 items-center gap-2 rounded-md bg-mint px-3 text-sm text-white" @click="createTag">
                       <Plus class="h-4 w-4" />
                       添加
                     </button>
@@ -400,7 +473,7 @@
                   <div class="flex items-center justify-between gap-4 border-t border-line pt-3">
                     <dt class="text-stone-500">Git 地址</dt>
                     <dd class="min-w-0">
-                      <button type="button" class="inline-flex max-w-full items-center gap-2 rounded-md border border-line bg-[#fbfaf6] px-3 py-2 text-left text-sm text-mint hover:border-mint" @click="openGitRepository">
+                      <button type="button" class="inline-flex max-w-full items-center gap-2 rounded-md border border-line bg-header px-3 py-2 text-left text-sm text-mint hover:border-mint" @click="openGitRepository">
                         <ExternalLink class="h-4 w-4 shrink-0" />
                         <span class="truncate">https://github.com/passheep/SheepClip</span>
                       </button>
@@ -412,7 +485,7 @@
           </section>
           </Transition>
         </div>
-        <footer class="flex h-10 items-center border-t border-line bg-[#fbfaf6] px-5 text-xs text-stone-600">
+        <footer class="flex h-10 items-center border-t border-line bg-header px-5 text-xs text-stone-600">
           <span>{{ statusText }}</span>
         </footer>
       </section>
@@ -452,7 +525,7 @@
             <button type="button" class="h-9 rounded-md border border-line bg-white px-3 text-sm" @click="copyDetailItem">复制</button>
             <button v-if="detailKind === 'clipboard'" type="button" class="h-9 rounded-md border border-rust bg-white px-3 text-sm text-rust" @click="deleteDetailItem">删除</button>
             <button v-if="detailTextSelectable" type="button" class="h-9 rounded-md border border-line bg-white px-3 text-sm" @click="selectAllDetail">全选</button>
-            <button v-if="canAddDetailToQuickInput" type="button" class="h-9 rounded-md bg-ink px-3 text-sm text-white" @click="addDetailToQuickInput">添加到快捷输入</button>
+            <button v-if="canAddDetailToQuickInput" type="button" class="h-9 rounded-md bg-mint px-3 text-sm text-white" @click="addDetailToQuickInput">添加到快捷输入</button>
           </span>
         </footer>
       </section>
@@ -475,7 +548,7 @@
         <p class="mt-2 text-sm text-stone-600">会恢复推荐设置并重新显示新手引导；已有剪贴板历史和快捷短语不会被删除。</p>
         <div class="mt-4 flex justify-end gap-2">
           <button type="button" class="h-9 rounded-md border border-line bg-white px-3 text-sm" @click="resetConfirmVisible = false">取消</button>
-          <button type="button" class="h-9 rounded-md bg-ink px-3 text-sm text-white disabled:cursor-not-allowed disabled:opacity-60" :disabled="resetBusy" @click="confirmResetSettings">
+          <button type="button" class="h-9 rounded-md bg-mint px-3 text-sm text-white disabled:cursor-not-allowed disabled:opacity-60" :disabled="resetBusy" @click="confirmResetSettings">
             {{ resetBusy ? '重置中...' : '确认重置' }}
           </button>
         </div>
@@ -488,7 +561,7 @@
         <p class="mt-2 text-sm text-stone-600">放到托盘后仍会继续监听剪贴板；退出应用会停止所有快捷键和剪贴板监听。</p>
         <div class="mt-4 flex justify-end gap-2">
           <button type="button" class="h-9 rounded-md border border-line bg-white px-3 text-sm text-rust" @click="confirmExitApp">退出应用</button>
-          <button type="button" class="h-9 rounded-md bg-ink px-3 text-sm text-white" @click="confirmCloseToTray">放到托盘</button>
+          <button type="button" class="h-9 rounded-md bg-mint px-3 text-sm text-white" @click="confirmCloseToTray">放到托盘</button>
         </div>
       </section>
     </div>
@@ -518,7 +591,7 @@
           <div class="flex gap-1">
             <span v-for="(_, index) in guideSteps" :key="index" class="h-1.5 w-5 rounded-full transition" :class="index === guideIndex ? 'bg-mint' : 'bg-stone-300'" />
           </div>
-          <button type="button" class="h-9 rounded-md bg-ink px-3 text-sm text-white" @click="nextGuideStep">{{ guideIndex === guideSteps.length - 1 ? '完成' : '下一步' }}</button>
+          <button type="button" class="h-9 rounded-md bg-mint px-3 text-sm text-white" @click="nextGuideStep">{{ guideIndex === guideSteps.length - 1 ? '完成' : '下一步' }}</button>
         </div>
       </section>
     </div>
@@ -533,6 +606,7 @@ import { listen } from '@tauri-apps/api/event';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { computed, defineComponent, h, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue';
 import {
+  Check,
   ClipboardList,
   Cog,
   Copy,
@@ -544,6 +618,7 @@ import {
   Image as ImageIcon,
   Maximize2,
   Minus,
+  Palette,
   PanelLeftClose,
   PanelLeftOpen,
   Pin,
@@ -583,8 +658,19 @@ import {
   setMainWindowAlwaysOnTop,
 } from './lib/commands';
 import { restoreAndTrackWindowSize } from './lib/windowSize';
+import {
+  FONT_OPTIONS,
+  THEME_OPTIONS,
+  getAvailableFontOptions,
+  getThemeStyle,
+  resolveFontKey,
+  resolveThemeKey,
+  type FontKey,
+  type FontOption,
+  type ThemeKey,
+} from './theme';
 
-type ViewKey = 'clipboard' | 'quick' | 'settings' | 'about';
+type ViewKey = 'clipboard' | 'quick' | 'theme' | 'settings' | 'about';
 type SourceKey = 'clipboard' | 'quick';
 type GuidePlacement = 'right' | 'bottom' | 'left' | 'top';
 type GuideStep = {
@@ -599,6 +685,7 @@ type GuideStep = {
 const navItems = [
   { key: 'clipboard' as const, label: '剪贴板历史', icon: ClipboardList },
   { key: 'quick' as const, label: '快捷输入', icon: Zap },
+  { key: 'theme' as const, label: '主题', icon: Palette },
   { key: 'settings' as const, label: '设置', icon: Cog },
   { key: 'about' as const, label: '关于软件', icon: Info },
 ];
@@ -629,6 +716,7 @@ const dragQuickId = ref<number | null>(null);
 const dragQuickTargetId = ref<number | null>(null);
 const guideIndex = ref(0);
 const guideHighlight = ref<DOMRect | null>(null);
+const availableFontOptions = ref<FontOption[]>([FONT_OPTIONS[0]]);
 let quickDragStarted = false;
 let quickDragStartX = 0;
 let quickDragStartY = 0;
@@ -637,6 +725,8 @@ let guideStepTimers: number[] = [];
 
 const settings = reactive<AppSettings>({
   history_limit: 2000,
+  theme_key: 'warm',
+  font_key: 'system',
   main_hotkey: 'Alt',
   main_hotkey_enabled: true,
   inline_trigger: '//',
@@ -703,7 +793,7 @@ const SettingSwitch = defineComponent({
   },
   emits: ['update:modelValue'],
   setup(props, { emit }) {
-    return () => h('div', { class: 'flex items-center justify-between gap-4 rounded-md bg-[#fbfaf6] px-3 py-2' }, [
+    return () => h('div', { class: 'flex items-center justify-between gap-4 rounded-md bg-header px-3 py-2' }, [
       h('span', [
         h('span', { class: 'block text-sm font-medium' }, props.label),
         h('span', { class: 'block text-xs text-stone-600' }, props.description),
@@ -742,6 +832,9 @@ const visibleEntries = computed(() => {
 });
 const sidebarCollapsed = computed(() => autoSidebarCollapsed.value || manualSidebarCollapsed.value);
 const activeViewTitle = computed(() => navItems.find((item) => item.key === activeView.value)?.label ?? 'SheepClip');
+const currentThemeKey = computed(() => resolveThemeKey(settings.theme_key));
+const currentFontKey = computed(() => resolveFontKey(settings.font_key, availableFontOptions.value.map((font) => font.key)));
+const appThemeStyle = computed(() => getThemeStyle(currentThemeKey.value, currentFontKey.value, availableFontOptions.value));
 const detailClipboardItem = computed(() => detailKind.value === 'clipboard' ? detailItem.value as ClipboardItem | null : null);
 const detailTextSelectable = computed(() => detailKind.value === 'quick' || !detailClipboardItem.value || detailClipboardItem.value.kind === 'text');
 const canAddDetailToQuickInput = computed(() => detailKind.value === 'clipboard' && detailClipboardItem.value?.kind === 'text');
@@ -847,6 +940,23 @@ function itemKey(source: SourceKey, id: number) {
   return `${source}:${id}`;
 }
 
+function refreshAvailableFonts() {
+  availableFontOptions.value = getAvailableFontOptions();
+}
+
+function normalizeAppearanceSettings() {
+  settings.theme_key = resolveThemeKey(settings.theme_key);
+  settings.font_key = resolveFontKey(settings.font_key, availableFontOptions.value.map((font) => font.key));
+}
+
+function selectTheme(themeKey: ThemeKey) {
+  settings.theme_key = themeKey;
+}
+
+function selectFont(fontKey: FontKey) {
+  settings.font_key = resolveFontKey(fontKey, availableFontOptions.value.map((font) => font.key));
+}
+
 function selectItem(source: SourceKey, id: number) {
   selectedKey.value = itemKey(source, id);
   if (source === 'quick') {
@@ -898,15 +1008,8 @@ function scrollClipboardToTop() {
 }
 
 function switchPrimaryView() {
-  if (activeView.value === 'about') {
-    activeView.value = 'settings';
-    return;
-  }
-  if (activeView.value === 'settings') {
-    activeView.value = 'about';
-    return;
-  }
-  activeView.value = activeView.value === 'clipboard' ? 'quick' : 'clipboard';
+  const currentIndex = navItems.findIndex((item) => item.key === activeView.value);
+  activeView.value = navItems[(currentIndex + 1) % navItems.length].key;
 }
 
 function findGuideElement(step: GuideStep) {
@@ -1510,7 +1613,9 @@ watch(
 );
 
 onMounted(async () => {
+  refreshAvailableFonts();
   Object.assign(settings, await getSettings());
+  normalizeAppearanceSettings();
   await nextTick();
   settingsReady = true;
   updateResponsiveSidebar();
@@ -1571,3 +1676,5 @@ onUnmounted(() => {
   unlistenWindowSize?.();
 });
 </script>
+
+

@@ -86,6 +86,8 @@ const queryInputRef = ref<HTMLInputElement | null>(null);
 const listRef = ref<HTMLElement | null>(null);
 const settings = ref<AppSettings>({
   history_limit: 2000,
+  theme_key: 'warm',
+  font_key: 'system',
   main_hotkey: 'Alt',
   main_hotkey_enabled: true,
   inline_trigger: '//',

@@ -4,11 +4,17 @@ export default {
   theme: {
     extend: {
       colors: {
-        ink: '#16181d',
-        panel: '#f7f7f4',
-        line: '#dedbd2',
-        mint: '#2f8f71',
-        rust: '#b25f3a',
+        ink: 'var(--color-ink)',
+        panel: 'var(--color-panel)',
+        line: 'var(--color-line)',
+        mint: 'var(--color-primary)',
+        rust: 'var(--color-danger)',
+        sidebar: 'var(--color-sidebar)',
+        header: 'var(--color-header)',
+        card: 'var(--color-card)',
+        muted: 'var(--color-muted)',
+        primarySoft: 'var(--color-primary-soft)',
+        primaryMuted: 'var(--color-primary-muted)',
       },
       boxShadow: {
         soft: '0 18px 48px rgba(22, 24, 29, 0.12)',
