@@ -49,6 +49,8 @@ const fallbackTags = ['contact', 'email', 'address', 'common'];
 
 const fallbackSettings: AppSettings = {
   history_limit: 2000,
+  theme_key: 'warm',
+  font_key: 'system',
   main_hotkey: 'Alt',
   main_hotkey_enabled: true,
   inline_trigger: '//',

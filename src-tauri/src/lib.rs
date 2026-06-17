@@ -113,6 +113,8 @@ struct SaveQuickInputPayload {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct AppSettings {
     history_limit: i64,
+    theme_key: String,
+    font_key: String,
     main_hotkey: String,
     main_hotkey_enabled: bool,
     inline_trigger: String,
@@ -142,6 +144,9 @@ enum AppError {
     #[error(transparent)]
     Clipboard(#[from] arboard::Error),
 }
+
+const THEME_KEYS: [&str; 5] = ["warm", "blue", "mint", "graphite", "violet"];
+const FONT_KEYS: [&str; 5] = ["system", "microsoft-yahei", "simhei", "simsun", "kaiti"];
 
 impl Serialize for AppError {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
@@ -1648,6 +1653,8 @@ fn normalize_quick_sort_order(conn: &Connection) -> AppResult<()> {
 fn read_settings(conn: &Connection) -> AppResult<AppSettings> {
     Ok(AppSettings {
         history_limit: read_i64(conn, "history_limit", 2000)?.clamp(50, 10000),
+        theme_key: read_text(conn, "theme_key", "warm")?,
+        font_key: read_text(conn, "font_key", "system")?,
         main_hotkey: read_text(conn, "main_hotkey", "Alt")?,
         main_hotkey_enabled: read_bool(conn, "main_hotkey_enabled", true)?,
         inline_trigger: read_text(conn, "inline_trigger", "//")?,
@@ -1674,6 +1681,8 @@ fn read_settings(conn: &Connection) -> AppResult<AppSettings> {
 fn recommended_settings() -> AppSettings {
     AppSettings {
         history_limit: 2000,
+        theme_key: "warm".into(),
+        font_key: "system".into(),
         main_hotkey: "Alt".into(),
         main_hotkey_enabled: true,
         inline_trigger: "//".into(),
@@ -1696,6 +1705,16 @@ fn recommended_settings() -> AppSettings {
 fn sanitize_settings(settings: AppSettings) -> AppSettings {
     AppSettings {
         history_limit: settings.history_limit.clamp(50, 10000),
+        theme_key: if THEME_KEYS.contains(&settings.theme_key.as_str()) {
+            settings.theme_key
+        } else {
+            "warm".into()
+        },
+        font_key: if FONT_KEYS.contains(&settings.font_key.as_str()) {
+            settings.font_key
+        } else {
+            "system".into()
+        },
         main_hotkey: if settings.main_hotkey == "Ctrl" {
             "Ctrl".into()
         } else {
@@ -1726,6 +1745,8 @@ fn sanitize_settings(settings: AppSettings) -> AppSettings {
 fn settings_entries(settings: &AppSettings) -> Vec<(&'static str, String)> {
     vec![
         ("history_limit", settings.history_limit.to_string()),
+        ("theme_key", settings.theme_key.clone()),
+        ("font_key", settings.font_key.clone()),
         ("main_hotkey", settings.main_hotkey.clone()),
         (
             "main_hotkey_enabled",
@@ -3153,5 +3174,31 @@ impl MainHotkey {
             Self::Alt => matches!(key, Key::Alt | Key::AltGr),
             Self::Ctrl => matches!(key, Key::ControlLeft | Key::ControlRight),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn sanitize_settings_falls_back_unknown_theme_and_font() {
+        let mut settings = recommended_settings();
+        settings.theme_key = "unknown".into();
+        settings.font_key = "unknown".into();
+
+        let sanitized = sanitize_settings(settings);
+
+        assert_eq!(sanitized.theme_key, "warm");
+        assert_eq!(sanitized.font_key, "system");
+    }
+
+    #[test]
+    fn settings_entries_include_theme_fields() {
+        let settings = recommended_settings();
+        let entries = settings_entries(&settings);
+
+        assert!(entries.iter().any(|(key, value)| *key == "theme_key" && value == "warm"));
+        assert!(entries.iter().any(|(key, value)| *key == "font_key" && value == "system"));
     }
 }

@@ -24,6 +24,8 @@ export interface QuickInput {
 
 export interface AppSettings {
   history_limit: number;
+  theme_key: string;
+  font_key: string;
   main_hotkey: 'Alt' | 'Ctrl';
   main_hotkey_enabled: boolean;
   inline_trigger: string;
