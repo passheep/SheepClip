@@ -12,6 +12,7 @@ const fallbackClipboardItems: ClipboardItem[] = [
     source_app: '演示数据',
     created_at: new Date().toISOString(),
     used_at: null,
+    copy_count: 1,
   },
 ];
 

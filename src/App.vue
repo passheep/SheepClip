@@ -120,7 +120,10 @@
                 </span>
                 <span class="min-w-0">
                   <span class="block truncate text-sm">{{ clipboardDisplayText(item) }}</span>
-                  <span class="mt-0.5 block truncate text-xs text-stone-500">{{ kindLabel(item.kind) }}</span>
+                  <span class="mt-0.5 block truncate text-xs text-stone-500">
+                    {{ kindLabel(item.kind) }}
+                    <template v-if="item.copy_count > 1"> · 复制 {{ item.copy_count }} 次</template>
+                  </span>
                 </span>
                 <span class="flex items-center gap-2">
                   <img v-if="clipboardThumbnail(item)" :src="clipboardThumbnail(item) || ''" alt="" class="h-8 w-10 rounded border border-line object-cover" />
@@ -504,7 +507,7 @@
                 <dl class="mt-5 space-y-3 text-sm">
                   <div class="flex items-center justify-between gap-4 border-t border-line pt-3">
                     <dt class="text-stone-500">软件版本</dt>
-                    <dd class="font-medium">0.19</dd>
+                    <dd class="font-medium">0.20</dd>
                   </div>
                   <div class="flex items-center justify-between gap-4 border-t border-line pt-3">
                     <dt class="text-stone-500">开发者</dt>
@@ -544,6 +547,10 @@
               类型：{{ detailClipboardItem ? kindLabel(detailClipboardItem.kind) : '文本' }}
               <span class="mx-1">·</span>
               复制时间：{{ formatDateTime(detailItem.created_at) }}
+              <template v-if="detailClipboardItem && detailClipboardItem.copy_count > 1">
+                <span class="mx-1">·</span>
+                合并复制：{{ detailClipboardItem.copy_count }} 次
+              </template>
             </p>
             <p v-if="detailKind === 'clipboard'" class="mt-1 max-w-xl truncate text-xs text-stone-500">
               来源：{{ detailClipboardItem?.source_app || '未知来源' }}

@@ -12,7 +12,10 @@ use std::{
     fs,
     path::{Path, PathBuf},
     process::{Command, Stdio},
-    sync::{Arc, Mutex},
+    sync::{
+        atomic::{AtomicU64, Ordering},
+        Arc, Mutex,
+    },
     thread,
     time::{Duration, Instant},
 };
@@ -29,6 +32,7 @@ struct AppState {
     hotkey_config: Arc<Mutex<HotkeyConfig>>,
     inline_state: Arc<Mutex<InlineState>>,
     main_pointer_operation_until: Arc<Mutex<Option<Instant>>>,
+    startup_setting_version: Arc<AtomicU64>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -74,6 +78,7 @@ struct ClipboardItem {
     source_app: Option<String>,
     created_at: String,
     used_at: Option<String>,
+    copy_count: i64,
 }
 
 struct ClipboardSnapshot {
@@ -254,6 +259,7 @@ pub fn run() {
                 hotkey_config: hotkey_config.clone(),
                 inline_state: inline_state.clone(),
                 main_pointer_operation_until: main_pointer_operation_until.clone(),
+                startup_setting_version: Arc::new(AtomicU64::new(0)),
             };
 
             setup_main_window(app.handle(), main_pointer_operation_until);
@@ -569,6 +575,24 @@ fn apply_startup_setting(app: &AppHandle, enabled: bool, as_admin: bool) -> AppR
     Ok(())
 }
 
+fn apply_startup_setting_async(
+    app: AppHandle,
+    startup_setting_version: Arc<AtomicU64>,
+    enabled: bool,
+    as_admin: bool,
+) {
+    let version = startup_setting_version.fetch_add(1, Ordering::SeqCst) + 1;
+    thread::spawn(move || {
+        thread::sleep(Duration::from_millis(180));
+        if startup_setting_version.load(Ordering::SeqCst) != version {
+            return;
+        }
+        if let Err(error) = apply_startup_setting(&app, enabled, as_admin) {
+            eprintln!("应用开机启动设置失败: {error}");
+        }
+    });
+}
+
 #[cfg(target_os = "windows")]
 fn wide(value: &str) -> Vec<u16> {
     use std::ffi::OsStr;
@@ -747,7 +771,8 @@ fn migrate_database(conn: &Connection) -> AppResult<()> {
             source_app TEXT,
             content_hash TEXT NOT NULL,
             created_at TEXT NOT NULL,
-            used_at TEXT
+            used_at TEXT,
+            copy_count INTEGER NOT NULL DEFAULT 1
         );
 
         CREATE INDEX IF NOT EXISTS idx_clipboard_items_created_at
@@ -802,6 +827,12 @@ fn migrate_database(conn: &Connection) -> AppResult<()> {
     )?;
     ensure_column(conn, "clipboard_items", "source_app", "TEXT")?;
     ensure_column(conn, "clipboard_items", "used_at", "TEXT")?;
+    ensure_column(
+        conn,
+        "clipboard_items",
+        "copy_count",
+        "INTEGER NOT NULL DEFAULT 1",
+    )?;
     ensure_column(
         conn,
         "quick_inputs",
@@ -951,7 +982,7 @@ fn list_clipboard_items(
 
     let mut statement = conn.prepare(
         r#"
-        SELECT id, kind, title, content, preview, source_app, created_at, used_at
+        SELECT id, kind, title, content, preview, source_app, created_at, used_at, copy_count
         FROM clipboard_items
         WHERE ?1 = '' OR title LIKE ?2 OR content LIKE ?2 OR preview LIKE ?2
         ORDER BY datetime(created_at) DESC
@@ -975,6 +1006,7 @@ fn list_clipboard_items(
                 source_app: row.get(5)?,
                 created_at: row.get(6)?,
                 used_at: row.get(7)?,
+                copy_count: row.get(8)?,
             })
         })?
         .collect::<Result<Vec<_>, _>>()?;
@@ -1183,16 +1215,21 @@ fn save_settings(
 
     validate_shortcut_settings(&sanitized)?;
 
-    if previous.launch_at_startup != sanitized.launch_at_startup
-        || previous.launch_as_admin != sanitized.launch_as_admin
-    {
-        apply_startup_setting(&app, sanitized.launch_at_startup, sanitized.launch_as_admin)?;
-    }
+    let startup_changed = previous.launch_at_startup != sanitized.launch_at_startup
+        || previous.launch_as_admin != sanitized.launch_as_admin;
 
     write_settings(&conn, &sanitized)?;
     trim_history(&conn, sanitized.history_limit)?;
     apply_runtime_settings(&app, &state, &sanitized);
     let _ = app.emit("settings-updated", ());
+    if startup_changed {
+        apply_startup_setting_async(
+            app.clone(),
+            state.startup_setting_version.clone(),
+            sanitized.launch_at_startup,
+            sanitized.launch_as_admin,
+        );
+    }
 
     Ok(sanitized)
 }
@@ -1203,20 +1240,21 @@ fn reset_settings(app: AppHandle, state: State<AppState>) -> AppResult<AppSettin
     let previous = read_settings(&conn)?;
     let recommended = recommended_settings();
 
-    if previous.launch_at_startup != recommended.launch_at_startup
-        || previous.launch_as_admin != recommended.launch_as_admin
-    {
-        apply_startup_setting(
-            &app,
-            recommended.launch_at_startup,
-            recommended.launch_as_admin,
-        )?;
-    }
+    let startup_changed = previous.launch_at_startup != recommended.launch_at_startup
+        || previous.launch_as_admin != recommended.launch_as_admin;
 
     write_settings(&conn, &recommended)?;
     trim_history(&conn, recommended.history_limit)?;
     apply_runtime_settings(&app, &state, &recommended);
     let _ = app.emit("settings-updated", ());
+    if startup_changed {
+        apply_startup_setting_async(
+            app.clone(),
+            state.startup_setting_version.clone(),
+            recommended.launch_at_startup,
+            recommended.launch_as_admin,
+        );
+    }
     Ok(recommended)
 }
 
@@ -1925,15 +1963,15 @@ fn start_clipboard_watcher(app: AppHandle, db_path: PathBuf, last_text: Arc<Mute
         if let Ok(mut clipboard) = Clipboard::new() {
             if let Some(snapshot) = read_clipboard_snapshot(&mut clipboard) {
                 if !snapshot.content.trim().is_empty() {
+                    let sequence_number = clipboard_sequence_number();
                     let should_insert = last_text
                         .lock()
                         .map(|mut last| {
-                            if *last == snapshot.hash_input {
-                                false
-                            } else {
-                                *last = snapshot.hash_input.clone();
-                                true
-                            }
+                            should_record_clipboard_snapshot(
+                                &mut last,
+                                &snapshot.hash_input,
+                                sequence_number,
+                            )
                         })
                         .unwrap_or(false);
 
@@ -2039,9 +2077,38 @@ fn read_clipboard_snapshot(clipboard: &mut Clipboard) -> Option<ClipboardSnapsho
     None
 }
 
+fn should_record_clipboard_snapshot(
+    last_marker: &mut String,
+    content_marker: &str,
+    sequence_number: Option<u32>,
+) -> bool {
+    let event_marker = clipboard_change_marker(content_marker, sequence_number);
+    if *last_marker == event_marker {
+        return false;
+    }
+    if *last_marker == content_marker {
+        *last_marker = event_marker;
+        return false;
+    }
+    *last_marker = event_marker;
+    true
+}
+
+fn clipboard_change_marker(content_marker: &str, sequence_number: Option<u32>) -> String {
+    match sequence_number {
+        Some(number) => format!("{content_marker}#seq:{number}"),
+        None => content_marker.to_string(),
+    }
+}
+
 #[cfg(target_os = "windows")]
 fn clipboard_sequence_number() -> Option<u32> {
     clipboard_win::raw::seq_num().map(|number| number.get())
+}
+
+#[cfg(not(target_os = "windows"))]
+fn clipboard_sequence_number() -> Option<u32> {
+    None
 }
 
 #[cfg(target_os = "windows")]
@@ -2551,8 +2618,16 @@ fn insert_clipboard_snapshot(db_path: &Path, snapshot: ClipboardSnapshot) -> App
     let source_app = active_app_name();
 
     conn.execute(
-        "INSERT OR IGNORE INTO clipboard_items(kind, title, content, preview, source_app, content_hash, created_at)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+        "INSERT INTO clipboard_items(kind, title, content, preview, source_app, content_hash, created_at, copy_count)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 1)
+         ON CONFLICT(content_hash) DO UPDATE SET
+            kind = excluded.kind,
+            title = excluded.title,
+            content = excluded.content,
+            preview = excluded.preview,
+            source_app = excluded.source_app,
+            created_at = excluded.created_at,
+            copy_count = COALESCE(clipboard_items.copy_count, 1) + 1",
         params![
             snapshot.kind,
             snapshot.title,
@@ -3243,5 +3318,97 @@ mod tests {
         assert!(entries.iter().any(|(key, value)| *key == "font_key" && value == "system"));
         assert!(entries.iter().any(|(key, value)| *key == "font_size" && value == "14"));
         assert!(entries.iter().any(|(key, value)| *key == "font_weight" && value == "400"));
+    }
+
+    #[test]
+    fn insert_clipboard_snapshot_merges_duplicates_and_counts_copies() {
+        let unique = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        let db_path = std::env::temp_dir().join(format!(
+            "sheepclip-clipboard-merge-{}-{unique}.db",
+            std::process::id()
+        ));
+        let _ = std::fs::remove_file(&db_path);
+
+        insert_clipboard_snapshot(
+            &db_path,
+            ClipboardSnapshot {
+                kind: "text".into(),
+                title: "第一条".into(),
+                content: "重复文本".into(),
+                preview: "重复文本".into(),
+                hash_input: "重复文本".into(),
+            },
+        )
+        .unwrap();
+        insert_clipboard_snapshot(
+            &db_path,
+            ClipboardSnapshot {
+                kind: "text".into(),
+                title: "第二条".into(),
+                content: "重复文本".into(),
+                preview: "重复文本".into(),
+                hash_input: "重复文本".into(),
+            },
+        )
+        .unwrap();
+
+        let conn = Connection::open(&db_path).unwrap();
+        let hash = content_hash("重复文本");
+        let item_count: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM clipboard_items WHERE content_hash = ?1",
+                params![&hash],
+                |row| row.get(0),
+            )
+            .unwrap();
+        let copy_count: i64 = conn
+            .query_row(
+                "SELECT copy_count FROM clipboard_items WHERE content_hash = ?1",
+                params![&hash],
+                |row| row.get(0),
+            )
+            .unwrap();
+
+        assert_eq!(item_count, 1);
+        assert_eq!(copy_count, 2);
+
+        let _ = std::fs::remove_file(&db_path);
+    }
+
+    #[test]
+    fn clipboard_record_marker_skips_app_write_once_but_tracks_new_windows_events() {
+        let content_marker = "text:重复文本";
+        let mut last_marker = content_marker.to_string();
+
+        assert!(!should_record_clipboard_snapshot(
+            &mut last_marker,
+            content_marker,
+            Some(10),
+        ));
+        assert!(!should_record_clipboard_snapshot(
+            &mut last_marker,
+            content_marker,
+            Some(10),
+        ));
+        assert!(should_record_clipboard_snapshot(
+            &mut last_marker,
+            content_marker,
+            Some(11),
+        ));
+
+        let mut fallback_marker = String::new();
+        assert!(should_record_clipboard_snapshot(
+            &mut fallback_marker,
+            content_marker,
+            None,
+        ));
+        assert!(!should_record_clipboard_snapshot(
+            &mut fallback_marker,
+            content_marker,
+            None,
+        ));
     }
 }

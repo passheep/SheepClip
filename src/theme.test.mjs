@@ -84,21 +84,43 @@ test('scrollable views use theme-aware scrollbar styling', () => {
   assert.match(app, /key="settings"[^>]*scroll-thin/);
   assert.match(app, /key="about"[^>]*scroll-thin/);
   assert.match(app, /overflow-auto bg-white p-4[^>]*scroll-thin|scroll-thin[^>]*overflow-auto bg-white p-4/);
-  assert.match(app, /<dd class="font-medium">0\.19<\/dd>/);
+  assert.match(app, /<dd class="font-medium">0\.20<\/dd>/);
   assert.match(floating, /ref="listRef"[^>]*scroll-thin/);
 });
 
-test('package metadata is updated to version 0.19.0', () => {
+test('package metadata is updated to version 0.20.0', () => {
   const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
   const packageLock = JSON.parse(readFileSync(new URL('../package-lock.json', import.meta.url), 'utf8'));
   const tauriConfig = JSON.parse(readFileSync(new URL('../src-tauri/tauri.conf.json', import.meta.url), 'utf8'));
   const cargoToml = readFileSync(new URL('../src-tauri/Cargo.toml', import.meta.url), 'utf8');
   const cargoLock = readFileSync(new URL('../src-tauri/Cargo.lock', import.meta.url), 'utf8');
 
-  assert.equal(packageJson.version, '0.19.0');
-  assert.equal(packageLock.version, '0.19.0');
-  assert.equal(packageLock.packages[''].version, '0.19.0');
-  assert.equal(tauriConfig.version, '0.19.0');
-  assert.match(cargoToml, /^version = "0\.19\.0"$/m);
-  assert.match(cargoLock, /name = "sheepclip"\r?\nversion = "0\.19\.0"/);
+  assert.equal(packageJson.version, '0.20.0');
+  assert.equal(packageLock.version, '0.20.0');
+  assert.equal(packageLock.packages[''].version, '0.20.0');
+  assert.equal(tauriConfig.version, '0.20.0');
+  assert.match(cargoToml, /^version = "0\.20\.0"$/m);
+  assert.match(cargoLock, /name = "sheepclip"\r?\nversion = "0\.20\.0"/);
+});
+
+test('windows installer creates desktop shortcut after install', () => {
+  const tauriConfig = JSON.parse(readFileSync(new URL('../src-tauri/tauri.conf.json', import.meta.url), 'utf8'));
+  const hooks = readFileSync(new URL('../src-tauri/nsis-hooks.nsh', import.meta.url), 'utf8');
+
+  assert.equal(tauriConfig.bundle.windows.nsis.installMode, 'currentUser');
+  assert.equal(tauriConfig.bundle.windows.nsis.installerHooks, 'nsis-hooks.nsh');
+  assert.match(hooks, /!macro NSIS_HOOK_POSTINSTALL/);
+  assert.match(hooks, /Call CreateOrUpdateDesktopShortcut/);
+});
+
+test('startup setting changes are applied outside the save settings command path', () => {
+  const libRs = readFileSync(new URL('../src-tauri/src/lib.rs', import.meta.url), 'utf8');
+  const saveSettings = libRs.match(/fn save_settings\([\s\S]*?\n}\n\n#[^\n]*\nfn reset_settings/)?.[0] || '';
+  const resetSettings = libRs.match(/fn reset_settings\([\s\S]*?\n}\n\n#[^\n]*\nfn mark_main_pointer_operation/)?.[0] || '';
+
+  assert.match(libRs, /fn apply_startup_setting_async/);
+  assert.match(saveSettings, /apply_startup_setting_async/);
+  assert.match(resetSettings, /apply_startup_setting_async/);
+  assert.doesNotMatch(saveSettings, /apply_startup_setting\(&app/);
+  assert.doesNotMatch(resetSettings, /apply_startup_setting\(\s*&app/);
 });

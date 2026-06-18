@@ -10,6 +10,7 @@ export interface ClipboardItem {
   source_app?: string | null;
   created_at: string;
   used_at?: string | null;
+  copy_count: number;
 }
 
 export interface QuickInput {
