@@ -71,3 +71,34 @@ test('global styles route utility text classes through appearance variables', ()
   assert.match(css, /\.font-semibold[\s\S]*font-weight:\s*var\(--app-font-weight-semibold\)/);
   assert.match(css, /\.rich-text-preview[\s\S]*font-size:\s*var\(--app-font-size-sm\)/);
 });
+
+test('scrollable views use theme-aware scrollbar styling', () => {
+  const css = readFileSync(new URL('./styles.css', import.meta.url), 'utf8');
+  const app = readFileSync(new URL('./App.vue', import.meta.url), 'utf8');
+  const floating = readFileSync(new URL('./Floating.vue', import.meta.url), 'utf8');
+
+  assert.match(css, /\[data-theme\][\s\S]*scrollbar-color:\s*var\(--color-scrollbar-thumb\)\s+var\(--color-scrollbar-track\)/);
+  assert.match(css, /\[data-theme\][\s\S]*::-webkit-scrollbar-thumb[\s\S]*background:\s*var\(--color-scrollbar-thumb\)/);
+  assert.match(css, /\[data-theme\][\s\S]*::-webkit-scrollbar-track[\s\S]*background:\s*var\(--color-scrollbar-track\)/);
+  assert.match(app, /key="theme"[^>]*scroll-thin/);
+  assert.match(app, /key="settings"[^>]*scroll-thin/);
+  assert.match(app, /key="about"[^>]*scroll-thin/);
+  assert.match(app, /overflow-auto bg-white p-4[^>]*scroll-thin|scroll-thin[^>]*overflow-auto bg-white p-4/);
+  assert.match(app, /<dd class="font-medium">0\.19<\/dd>/);
+  assert.match(floating, /ref="listRef"[^>]*scroll-thin/);
+});
+
+test('package metadata is updated to version 0.19.0', () => {
+  const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+  const packageLock = JSON.parse(readFileSync(new URL('../package-lock.json', import.meta.url), 'utf8'));
+  const tauriConfig = JSON.parse(readFileSync(new URL('../src-tauri/tauri.conf.json', import.meta.url), 'utf8'));
+  const cargoToml = readFileSync(new URL('../src-tauri/Cargo.toml', import.meta.url), 'utf8');
+  const cargoLock = readFileSync(new URL('../src-tauri/Cargo.lock', import.meta.url), 'utf8');
+
+  assert.equal(packageJson.version, '0.19.0');
+  assert.equal(packageLock.version, '0.19.0');
+  assert.equal(packageLock.packages[''].version, '0.19.0');
+  assert.equal(tauriConfig.version, '0.19.0');
+  assert.match(cargoToml, /^version = "0\.19\.0"$/m);
+  assert.match(cargoLock, /name = "sheepclip"\r?\nversion = "0\.19\.0"/);
+});

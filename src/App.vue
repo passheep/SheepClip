@@ -227,7 +227,7 @@
             </form>
           </section>
 
-          <section v-else-if="activeView === 'theme'" key="theme" class="h-full overflow-y-auto p-5">
+          <section v-else-if="activeView === 'theme'" key="theme" class="scroll-thin h-full overflow-y-auto p-5">
             <div class="max-w-4xl">
               <div>
                 <h2 class="text-sm font-semibold">主题</h2>
@@ -345,7 +345,7 @@
             </div>
           </section>
 
-          <section v-else-if="activeView === 'settings'" key="settings" data-guide="settings-view" data-guide-scroll class="h-full overflow-y-auto p-5">
+          <section v-else-if="activeView === 'settings'" key="settings" data-guide="settings-view" data-guide-scroll class="scroll-thin h-full overflow-y-auto p-5">
             <div class="max-w-2xl">
               <h2 class="text-sm font-semibold">设置</h2>
               <div class="mt-4 space-y-4">
@@ -490,7 +490,7 @@
             </div>
           </section>
 
-          <section v-else key="about" data-guide="about-view" class="h-full overflow-y-auto p-5">
+          <section v-else key="about" data-guide="about-view" class="scroll-thin h-full overflow-y-auto p-5">
             <div class="max-w-2xl">
               <h2 class="text-sm font-semibold">关于软件</h2>
               <div class="mt-4 rounded-md border border-line bg-white p-4">
@@ -504,7 +504,7 @@
                 <dl class="mt-5 space-y-3 text-sm">
                   <div class="flex items-center justify-between gap-4 border-t border-line pt-3">
                     <dt class="text-stone-500">软件版本</dt>
-                    <dd class="font-medium">0.18</dd>
+                    <dd class="font-medium">0.19</dd>
                   </div>
                   <div class="flex items-center justify-between gap-4 border-t border-line pt-3">
                     <dt class="text-stone-500">开发者</dt>
@@ -553,7 +553,7 @@
             <X class="h-4 w-4" />
           </button>
         </header>
-        <div v-if="detailClipboardItem?.kind === 'image'" class="min-h-0 flex-1 overflow-auto bg-white p-4">
+        <div v-if="detailClipboardItem?.kind === 'image'" class="scroll-thin min-h-0 flex-1 overflow-auto bg-white p-4">
           <img :src="detailClipboardItem.content" alt="" class="max-h-[55vh] w-full rounded-md border border-line object-contain" />
         </div>
         <div
