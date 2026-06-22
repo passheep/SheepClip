@@ -23,16 +23,16 @@ if ([string]::IsNullOrWhiteSpace($Tag)) {
 $asset = Join-Path $root "src-tauri\target\release\bundle\nsis\SheepClip_${Version}_x64-setup.exe"
 
 if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
-  throw "未安装 GitHub CLI。请先执行：winget install GitHub.cli，然后执行：gh auth login"
+  throw "GitHub CLI is not installed. Run: winget install GitHub.cli ; then run: gh auth login"
 }
 
 if (-not (Test-Path $asset)) {
-  throw "未找到安装包：$asset。请先执行：npm run tauri:build"
+  throw "Release asset not found: $asset. Run first: npm run tauri:build"
 }
 
 gh auth status
 if ($LASTEXITCODE -ne 0) {
-  throw "GitHub CLI 未登录或认证失败。请先执行：gh auth login"
+  throw "GitHub CLI is not authenticated. Run first: gh auth login"
 }
 
 $releaseArgs = @("--repo", $Repo)
@@ -45,17 +45,17 @@ if ($Prerelease) {
 
 gh release view $Tag --repo $Repo *> $null
 if ($LASTEXITCODE -eq 0) {
-  Write-Host "Release $Tag 已存在，上传并覆盖安装包..."
+  Write-Host "Release $Tag exists. Uploading asset with overwrite..."
   gh release upload $Tag $asset --repo $Repo --clobber
   if ($LASTEXITCODE -ne 0) {
-    throw "上传 Release 安装包失败：$Tag"
+    throw "Failed to upload release asset: $Tag"
   }
 } else {
-  Write-Host "创建 Release $Tag 并上传安装包..."
+  Write-Host "Creating Release $Tag and uploading asset..."
   gh release create $Tag $asset @releaseArgs --title "SheepClip $Version" --generate-notes
   if ($LASTEXITCODE -ne 0) {
-    throw "创建 Release 失败：$Tag"
+    throw "Failed to create release: $Tag"
   }
 }
 
-Write-Host "Release 发布完成：$Tag"
+Write-Host "Release publish finished: $Tag"
