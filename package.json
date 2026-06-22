@@ -11,7 +11,9 @@
     "preview": "vite preview",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build"
+    "tauri:build": "tauri build",
+    "release:github": "powershell -ExecutionPolicy Bypass -File scripts/publish-release.ps1",
+    "release:github:build": "npm run tauri:build && npm run release:github"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.0.0",

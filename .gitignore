@@ -18,5 +18,8 @@ desktop.ini
 .env.*
 !.env.example
 
+# Local build/release command notes
+BUILD.md
+
 .idea/
 .vscode/
